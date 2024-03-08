@@ -43,7 +43,7 @@ def argument_handler(args:list[str], allowed_args:list[str], functions:list) -> 
     else:
         for i in range(len(functions)):
             if args[0] == allowed_args[i]:
-                functions[i](args[1:-1])
+                functions[i](args[1:])
                 return True
         return False
 

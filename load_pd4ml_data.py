@@ -1,3 +1,4 @@
+import os
 from pd4ml import TopTagging
 import numpy as np
 
@@ -35,11 +36,14 @@ def load(number_of_events:int=10000):
     y_val = y_train_ft[ -number_of_events: ]
 
     print(f"Saving to {PATH}")
+    
+    for paths in ["test", "train", "val"]:
+        if not os.path.exists(f"{PATH}/{paths}"):
+            os.makedirs(f"{PATH}/{paths}", exist_ok=True)
+    
     np.save(f"{PATH}/train/x_data.npy",X_train)
     np.save(f"{PATH}/train/y_data.npy",y_train)
     np.save(f"{PATH}/test/x_data.npy",X_test)
     np.save(f"{PATH}/test/y_data.npy",y_test)
     np.save(f"{PATH}/val/x_data.npy",X_val)
     np.save(f"{PATH}/val/y_data.npy",y_val)
-
-

@@ -24,8 +24,8 @@ def returning():
 
 #show functions
 def show(args:list[str]=[]):
-    functions = ["models", "datasets"]
-    allowed_args = [show_models, show_datasets]
+    allowed_args = ["models", "datasets"]
+    functions = [show_models, show_datasets]
     if len(args) == 0:
         print("Usage:")
         print("show models [available/trained]")
@@ -35,38 +35,46 @@ def show(args:list[str]=[]):
     else:
         invalid_args_error(args)
 
-def show_models(arg:str=""):
-    if arg == "":
+def show_models(args:str=list[str]):
+    if max_arg_error(args,1) or min_arg_error(args,1):
         print("Usage:show models [available/trained]")
-    elif arg == "available":
+    elif args[0] == "":
+        print("Usage:show models [available/trained]")
+    elif args[0] == "available":
         separator()
         print("Available Models:")
         separator()
         for name in models.__models__:
             print(name)
         separator()
-    elif arg == "trained":
+    elif args[0] == "trained":
         separator()
         print("Trained Models:")
         separator()
-        print(os.listdir("trained_models/"))
+        try:
+            print(os.listdir("trained_models/"))
+        except:
+            print("Directory trained_models/ does not exist!")
         separator()
     else:
-        invalid_args_error([arg])
-        print("Usage:show datasets [not_merged/not_preprocessed/preprocessed]")
+        invalid_args_error(args)
+        print("Usage:show models [available/trained]")
 
-def show_datasets(arg:str=""):
-    if arg == "":
-        print("Usage:show datasets [not_merged/not_preprocessed/preprocessed]")
-    elif arg in ["not_merged", "not_preprocessed", "preprocessed"]:
+def show_datasets(args:str=list[str]):
+    if max_arg_error(args,1) or min_arg_error(args,1):
+        print("Usage:show datasets [not_merged/not_processed/preprocessed]")
+    elif args[0] in ["not_merged", "not_processed", "preprocessed"]:
         separator()
-        print(f"Available datasets in data/{arg}:")
+        print(f"Available datasets in data/{args[0]}:")
         separator()
-        os.listdir(f"data/{arg}/")
+        try:
+            print(os.listdir(f"data/{args[0]}/"))
+        except:
+            print(f"Directory data/{args[0]}/ does not exist!")
         separator()
     else:
-        invalid_args_error([arg])
-        print("Usage:show datasets [not_merged/not_preprocessed/preprocessed]")
+        invalid_args_error([args])
+        print("Usage:show datasets [not_merged/not_processed/preprocessed]")
     
 
 def show_help(args:list[str]):

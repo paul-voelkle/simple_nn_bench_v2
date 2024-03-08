@@ -9,6 +9,8 @@ PATH_NOT_MERGED = "./data/not_merged"
 PATH_NOT_PROCESSED = "./data/not_processed"
 PATH_PROCESSED = "./data/preprocessed"
 
+MAX_DATA_LENGTH = 50000
+
 # Some initial settings
 __n_warning__ = 0.7
 n_shift_phi, n_shift_eta = 0, 0
@@ -80,7 +82,6 @@ def preprocessing( x ,y, weights, rotate=True, flip=True ):
     """
 
     # Shift
-    print(weights.sum())
     x_centroid = img_mom(x, y, weights, 1, 0) / weights.sum()
     y_centroid = img_mom(x, y, weights, 0, 1)/ weights.sum()
     x = x - x_centroid
@@ -227,7 +228,7 @@ def sortPT(arr:np.ndarray):
         arr[i] = sortEventsPt(arr[i])
 
 def preprocess_data(src_folder:str="", files:list[str]=[], out_folder:str=""):
-    max_length = 50000
+    
     
     if len(files) == 0:
         print("Error: No filenames provided!")
@@ -264,13 +265,16 @@ def preprocess_data(src_folder:str="", files:list[str]=[], out_folder:str=""):
             x, y = pT_cut(x, y, float(ptMin), float(ptMax))
         
         #split x array for preprocessing:
-        xs = split_array(10000, x)
-        zs = []
-        for x in xs:
-            sortPT(x)
-            zs.append(constit_to_img(x, 50, True, True, True).astype('float32'))
+        if len(x) > MAX_DATA_LENGTH:
+            xs = split_array(MAX_DATA_LENGTH, x)
+            zs = []
+            for x in xs:
+                sortPT(x)
+                zs.append(constit_to_img(x, 50, True, True, True).astype('float32'))
 
-        z = merge_arrays(zs)
+            z = merge_arrays(zs)
+        else:
+            z = constit_to_img(x, 50, True, True, True).astype('float32')
         
         sig = z[np.where( y[:,0] == 1)]
         bkg = z[np.where( y[:,0] == 0)]
