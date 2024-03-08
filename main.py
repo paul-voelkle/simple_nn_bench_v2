@@ -1,0 +1,147 @@
+import os 
+import sys
+import models
+import load_pd4ml_data
+from preprocess_data import preprocess_data, merge_data
+from training_network import train_network
+from test_networks import test_model
+from time import sleep
+from utilities import *
+
+
+#some drawing utilities
+def start_up():
+    clear()
+    separator()
+    print("Simple NN-Bench v0.0.3")
+    separator()
+
+def returning():
+    print("Done, press enter to return to main menu")
+    input()
+    start_up()
+
+
+#show functions
+def show(args:list[str]=[]):
+    functions = ["models", "datasets"]
+    allowed_args = [show_models, show_datasets]
+    if len(args) == 0:
+        print("Usage:")
+        print("show models [available/trained]")
+        print("show datasets [not_merged/not_preprocessed/preprocessed]")
+    elif argument_handler(args, allowed_args, functions):
+        return
+    else:
+        invalid_args_error(args)
+
+def show_models(arg:str=""):
+    if arg == "":
+        print("Usage:show models [available/trained]")
+    elif arg == "available":
+        separator()
+        print("Available Models:")
+        separator()
+        for name in models.__models__:
+            print(name)
+        separator()
+    elif arg == "trained":
+        separator()
+        print("Trained Models:")
+        separator()
+        print(os.listdir("trained_models/"))
+        separator()
+    else:
+        invalid_args_error([arg])
+        print("Usage:show datasets [not_merged/not_preprocessed/preprocessed]")
+
+def show_datasets(arg:str=""):
+    if arg == "":
+        print("Usage:show datasets [not_merged/not_preprocessed/preprocessed]")
+    elif arg in ["not_merged", "not_preprocessed", "preprocessed"]:
+        separator()
+        print(f"Available datasets in data/{arg}:")
+        separator()
+        os.listdir(f"data/{arg}/")
+        separator()
+    else:
+        invalid_args_error([arg])
+        print("Usage:show datasets [not_merged/not_preprocessed/preprocessed]")
+    
+
+def show_help(args:list[str]):
+    if args == []:
+        f = open('help.txt', 'r')
+        print(f.read())
+
+
+#program mode prompts
+def train_prompt(args:list[str]):
+    if max_arg_error(args, 3) or min_arg_error(args, 3):
+        print("Usage: train modelname trainingSet valSet")
+    elif args[0] in models.__models__:
+        print(f"Start training {args[0]}")
+        train_network(model_name=args[0], train_set=args[1], val_set=args[2])
+        returning()
+    else:
+        print(f"{args[0]} is not a valid model!")
+        show(["models", "available"])
+
+def test_prompt(args:list[str]):
+    if min_arg_error(args, 2) or max_arg_error(args, 2):
+        show(["models", "trained"])
+        print("Usage: test modelname test_set")
+        return
+    test_model(args[0], args[1])
+    returning()
+
+def preprocess_prompt(args:list[str]):
+    if min_arg_error(args, 3):
+        print("Usage: preprocess src_folder out_folder set_names")
+        return
+    preprocess_data(src_folder=args[0], out_folder=args[1], files=args[2:])
+    returning()
+
+def load_prompt(args:list[str]):
+    if max_arg_error(args, 1) or min_arg_error(args, 1):
+        print("Require Number of events!")
+        return
+    else:
+        load_pd4ml_data.load(int(args[0]))
+        returning()
+
+def merge_data_prompt(args:list[str]):
+    if max_arg_error(args, 4) or min_arg_error(args, 4):
+        print("Usage: merge src_data_1 src_data_2 output shuffle[True/False]")
+        return
+    merge_data(args[0], args[1], args[2], args[3])
+    returning()
+    return
+
+
+#main menu functions
+def main():    
+    while True:
+        user_input = input()
+        if user_input == "exit":
+            print("Bye!")
+            sleep(1)
+            clear()
+            break
+        else:
+            main_menu_input(user_input)
+            
+def main_menu_input(input:str=""):
+    command, args = input_handler(input)
+    commands = ["help", "show", "train", "test", "preprocess", "load", "merge"]
+    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt]
+    if command == "":
+        print("Try help for commands or exit to close program")
+        return
+    else:
+        command_handler(command, commands, functions, args)
+
+
+start_up()
+main()
+

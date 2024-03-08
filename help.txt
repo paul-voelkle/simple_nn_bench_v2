@@ -1,0 +1,8 @@
+Usage:
+train modelname             train a available model
+test modelname              test a trained model
+show models                 show available models
+show models trained         show only trained models
+exit                        exit program
+help                        show this help screen
+help command                show detailed help
