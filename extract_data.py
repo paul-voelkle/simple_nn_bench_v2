@@ -74,13 +74,13 @@ def exctr_jetConstit_4_momenta(src_path:str, src_file:str, out_name:str, topBool
                     continue
                 elif constit.IsA() == ROOT.GenParticle.Class():
                     particle = ROOT.GenParticle(constit)
-                    momentum = [particle.P4().E(), particle.P4().Px(), particle.P4().Pz(), particle.P4().Py()]
+                    momentum = [particle.P4().E(), particle.P4().Px(), particle.P4().Py(), particle.P4().Pz()]
                 elif constit.IsA() == ROOT.Track.Class():
                     track = ROOT.Track(constit)
-                    momentum = [track.P4().E(), track.P4().Px(), track.P4().Pz(), track.P4().Py()]
+                    momentum = [track.P4().E(), track.P4().Px(), track.P4().Py(), track.P4().Pz()]
                 elif constit.IsA() == ROOT.Tower.Class():
                     tower = ROOT.Tower(constit)
-                    momentum = [tower.P4().E(), tower.P4().Px(), tower.P4().Pz(), tower.P4().Py()]
+                    momentum = [tower.P4().E(), tower.P4().Px(), tower.P4().Py(), tower.P4().Pz()]
                 jet_constit.append(momentum)
 
             for i in range(len(jet_constit),200):

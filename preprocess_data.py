@@ -135,6 +135,7 @@ def preprocessing( x ,y, weights, rotate=True, flip=True ):
             
     return x_rot, y_rot
 
+
 def pT_cut(x:np.ndarray, y:np.ndarray, pT_min:float, pT_max:float):
     print("Cropping jets")
     pxs   = x[:,:,1]
@@ -160,6 +161,7 @@ def constit_to_img( jets:np.ndarray, n_constit:int, norm:bool, rotate:bool, flip
     pzs   = jets[:,:,3]
     pT    = np.sqrt(pxs**2+pys**2)
     
+
     print( "Calculating eta" )
     etas  = eta(pT,pzs)
     
