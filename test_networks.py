@@ -1,4 +1,4 @@
-from utilities import HyperParams, TrainStats, load_dataset, load_model, clear, separator, confirm, store_results
+from utilities import HyperParams, TrainStats, load_dataset, load_model, clear, separator, confirm, store_results, init_device
 from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np 
 import torch
@@ -71,6 +71,7 @@ def test_model(path:str="", test_set:str=""):
     model_path = f"{PATH}/{path}"
     params = HyperParams.load(model_path)
     stats = TrainStats.load(model_path)
+    params.device = init_device()
     print(stats.name)
     model = load_model(stats.name, params, model_path)
 

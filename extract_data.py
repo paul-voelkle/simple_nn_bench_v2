@@ -1,7 +1,6 @@
 import os
 import numpy as np
-from print_data_utils import clear
-from utilities import confrim
+from utilities import confirm
 
 try:
     import ROOT
@@ -18,12 +17,12 @@ def exctr_jetConstit_4_momenta(src_path:str, src_file:str, out_name:str, topBool
     PATH = "data/not_processed"
 
     if os.path.exists(f"{PATH}/{out_name}"):
-        if confrim(f"Directory {PATH}/{out_name}/ already exists. Data might be overwritten. Proceed?"):
+        if confirm(f"Directory {PATH}/{out_name}/ already exists. Data might be overwritten. Proceed?"):
             print("Proceeding")
         else:
             return
     else:
-        os.mkdir(f"{PATH}/{out_name}")
+        os.makedirs(f"{PATH}/{out_name}",exist_ok=True)
 
 
     chain = ROOT.TChain("Delphes")

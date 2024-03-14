@@ -128,10 +128,13 @@ def merge_data_prompt(args:list[str]):
 
 
 #main menu functions
-def main():    
+def main():
+    config = Settings()
+    config.load()
     while True:
         user_input = input()
         if user_input == "exit":
+            config.save()
             print("Bye!")
             sleep(1)
             clear()

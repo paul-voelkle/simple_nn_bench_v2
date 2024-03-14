@@ -9,6 +9,7 @@ import numpy as np
 import pickle
 import math
 import csv
+import io
 
 ##menu navigation and printing utils
 def confirm(text:str)->bool:
@@ -62,6 +63,39 @@ def min_arg_error(args: list[str], min_args:int):
 def invalid_args_error(args:list[str]):
     print(f"{args} is/are not valid argument(s)")
 
+
+
+##programm settings
+class Settings():
+    path_trained:str
+    path_data:str
+    path_results:str
+
+    def save(self):   
+        with open("config.pkl",'wb') as file:
+            pickle.dump(self,file)
+    
+    def load(self):
+        try:
+            with open("config.pkl", 'rb') as file:
+                return pickle.load(file)
+        except:
+            print("config.pkl")
+            raise
+
+    def init_factory(self):
+        self.path_trained = "trained_models"
+        self.path_data = "data"
+        self.path_results = "test_results"
+        self.save()
+
+## cpu unpickler
+class CPU_Unpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module == 'torch.storage' and name == '_load_from_bytes':
+            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+        else:
+            return super().find_class(module, name)
 
 ##class to track model training statistics
 class TrainStats():
@@ -137,9 +171,13 @@ class TrainStats():
     
 
     def load(path):
+        
         try:
             with open(f"{path}/stats.pkl", 'rb') as file:
-                return pickle.load(file)
+                if cuda.is_available():
+                    return pickle.load(file)
+                else:
+                    return CPU_Unpickler(file).load()
         except:
             print(f"{path}/stats.pkl not found!")
             raise
@@ -196,12 +234,15 @@ class HyperParams():
     
 
     def load(path):
-        #try:
-        with open(f"{path}/hyper_parameter.pkl", 'rb') as file:
-            return pickle.load(file)
-        #except:
-        #    print(f"{path}/hyper_parameter.pkl not found!")
-        #    raise
+        try:
+            with open(f"{path}/hyper_parameter.pkl", 'rb') as file:
+                if cuda.is_available():
+                    return pickle.load(file)
+                else:
+                    return CPU_Unpickler(file).load()
+        except:
+            print(f"{path}/hyper_parameter.pkl not found!")
+            raise
     
     def edit(self):
         if confirm("Edit Hyper Parmeters?"):
@@ -299,7 +340,7 @@ def load_model(name:str, params:HyperParams, filepath:str):
     model_class = getattr(models, name)
     model = model_class.Model(training_size=params.training_size).to(params.device)
     model.eval()
-    state_dict = torch.load(filepath + "/state.pth", map_location=params.device)
+    state_dict = torch.load(filepath + "/state.pth", map_location=torch.device(params.device))
     model.load_state_dict(state_dict, strict=False)
     print(model)
     return model
