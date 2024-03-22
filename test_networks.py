@@ -62,7 +62,7 @@ def test_model(path:str="", test_set:str=""):
     
     if os.path.exists(result_path):
         if confirm(f"Path {result_path} already exists. Previous results might be overwritten. Edit path?"):
-            result_path = input
+            result_path = input()
 
     print(f"Creating directory {result_path}")
     os.makedirs(result_path, exist_ok=True)
@@ -75,8 +75,12 @@ def test_model(path:str="", test_set:str=""):
     print(stats.name)
     model = load_model(stats.name, params, model_path)
 
-    stats.dataset.append(test_set)
-
+    try:
+        stats.dataset.append(test_set)
+        STATS_DATASET = True
+    except:
+        STATS_DATASET = False
+        print("Old Training Stats ")
     #show hyperparamter edit promt
     params.edit()
 
@@ -100,7 +104,7 @@ def test_model(path:str="", test_set:str=""):
             Y_label="Binary CE", 
             #xticks=ticks,
             #yticks=ticks,
-            path=f'{RESULTS_PATH}/{path}',
+            path=result_path,
             fname='train_val_loss.png', 
             title=f'{stats.name}: training and validation losses')
         
@@ -119,7 +123,7 @@ def test_model(path:str="", test_set:str=""):
             Y_label='$\epsilon_{s}$ - TPR', 
             xticks = TICKS,
             yticks = TICKS,
-            path=f'{RESULTS_PATH}/{path}',
+            path=result_path,
             fname='roc_curve.png',
             linestyle=['solid', '--'])
     
@@ -131,7 +135,7 @@ def test_model(path:str="", test_set:str=""):
             X_label='$\epsilon_{bkg}$ - FPR', 
             Y_label='$\epsilon_{s}$ - TPR',
             Y_scale='log',
-            path=f'{RESULTS_PATH}/{path}',
+            path=result_path,
             fname='roc_curve_inv_fpr.png', 
             linestyle=['solid', '--'])
         
@@ -142,7 +146,7 @@ def test_model(path:str="", test_set:str=""):
         Y_label="Normailized",
         bins=50,
         histtype="step",
-        path=f'{RESULTS_PATH}/{path}',
+        path=result_path,
         fname='pred_hist.png')
     
     #plot and save std hist
@@ -152,7 +156,7 @@ def test_model(path:str="", test_set:str=""):
         Y_label="Normailized",
         bins=50,
         histtype="step",
-        path=f'{RESULTS_PATH}/{path}',
+        path=result_path,
         fname='std_hist.png',
         density=True)  
 
@@ -162,7 +166,7 @@ def test_model(path:str="", test_set:str=""):
             X_label="$\mu$",
             Y_label="$\sigma_{\mathrm{pred}}$",
             title=f"{stats.name}: Scatter Plot",
-            path=f'{RESULTS_PATH}/{path}',
+            path=result_path,
             fname='scatter.png')
     
     store_results(params, stats, test_loss, test_corr_perc, auc_score, result_path)

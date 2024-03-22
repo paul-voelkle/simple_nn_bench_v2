@@ -104,10 +104,10 @@ def test_prompt(args:list[str]):
     returning()
 
 def preprocess_prompt(args:list[str]):
-    if min_arg_error(args, 3):
-        print("Usage: preprocess src_folder out_folder set_names")
+    if min_arg_error(args, 2):
+        print("Usage: preprocess src_folder set_names")
         return
-    preprocess_data(src_folder=args[0], out_folder=args[1], files=args[2:])
+    preprocess_data(src_folder=args[0], files=args[1:])
     returning()
 
 def load_prompt(args:list[str]):
@@ -122,10 +122,9 @@ def merge_data_prompt(args:list[str]):
     if max_arg_error(args, 4) or min_arg_error(args, 4):
         print("Usage: merge src_data_1 src_data_2 output shuffle[True/False]")
         return
-    merge_data(args[0], args[1], args[2], args[3])
+    merge_data(args[0], args[1], args[2], args[3]=='True')
     returning()
     return
-
 
 #main menu functions
 def main():

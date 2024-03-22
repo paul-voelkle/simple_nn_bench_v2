@@ -8,7 +8,6 @@ import torch
 from sklearn.linear_model import LinearRegression
 from utilities import *
 
-
 def train_epoch( dataloader, model, loss_fn, optimizer, TrainStats:TrainStats):
     
     size = len( dataloader.dataset )

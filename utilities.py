@@ -63,30 +63,37 @@ def min_arg_error(args: list[str], min_args:int):
 def invalid_args_error(args:list[str]):
     print(f"{args} is/are not valid argument(s)")
 
-
-
 ##programm settings
 class Settings():
     path_trained:str
     path_data:str
     path_results:str
+    path_models:str
+    path_trained_models:str
+    path_nm:str
 
     def save(self):   
         with open("config.pkl",'wb') as file:
+            print("Saving config to ./config.pkl")
             pickle.dump(self,file)
     
     def load(self):
         try:
             with open("config.pkl", 'rb') as file:
                 return pickle.load(file)
-        except:
-            print("config.pkl")
-            raise
+        except IOError:
+            print("No config file found. Initialize factory settings")
+            self.init_factory()
+            return
 
     def init_factory(self):
         self.path_trained = "trained_models"
         self.path_data = "data"
         self.path_results = "test_results"
+        self.path_models:str = "models"
+        self.path_trained_models:str = "trained_models"
+        self.path_nm:str = f"{self.path_data}/not_merged"
+        self.path_m:str = f"{self.path_data}/merged"
         self.save()
 
 ## cpu unpickler

@@ -6,10 +6,14 @@ from utilities import merge_arrays, split_array, confirm, command_handler
 
 
 PATH_NOT_MERGED = "./data/not_merged" 
-PATH_NOT_PROCESSED = "./data/not_processed"
-PATH_PROCESSED = "./data/preprocessed"
+PATH_MERGED = "./data/merged"
+
 
 MAX_DATA_LENGTH = 50000
+
+NORM = True
+ROTATE = True
+FLIP = True
 
 # Some initial settings
 __n_warning__ = 0.7
@@ -229,20 +233,12 @@ def sortPT(arr:np.ndarray):
     for i in range(len(arr)):
         arr[i] = sortEventsPt(arr[i])
 
-def preprocess_data(src_folder:str="", files:list[str]=[], out_folder:str=""):
+def preprocess_data(src_folder:str="", files:list[str]=[]):
     
     
     if len(files) == 0:
         print("Error: No filenames provided!")
         return
-    if out_folder == "":
-        print("Error: No output folder defined!")
-        return
-    if os.path.exists(f"{PATH_PROCESSED}/{out_folder}"):
-        if not confirm(f"Warning: {PATH_PROCESSED}/{out_folder} already exists. Files may be overwritten. Use anyway?"):
-            return
-    else:
-        os.makedirs(f"{PATH_PROCESSED}/{out_folder}", exist_ok=True)
     
     if confirm("Set pT Cuts?"):
         print("Usage: ptMin[GeV] ptMax[GeV]")
@@ -252,12 +248,13 @@ def preprocess_data(src_folder:str="", files:list[str]=[], out_folder:str=""):
         pTCut = False
     
     for name in files:
-        x_filepath = f"{PATH_NOT_PROCESSED}/{src_folder}/{name}/x_data.npy"
-        y_filepath = f"{PATH_NOT_PROCESSED}/{src_folder}/{name}/y_data.npy"
-        outpath = f"{PATH_PROCESSED}/{out_folder}/{name}"
-
-        if not os.path.exists(outpath):
-            os.mkdir(outpath)
+        file_path = f"{PATH_MERGED}/{src_folder}/{name}"
+        x_filepath = f"{file_path}/x_data.npy"
+        y_filepath = f"{file_path}/y_data.npy"
+        z_filepath = f"{file_path}/z_data.npy"
+        
+        if not os.path.exists(file_path):
+            os.mkdir(file_path)
 
         x = np.load(x_filepath)
         y = np.load(y_filepath)
@@ -272,22 +269,22 @@ def preprocess_data(src_folder:str="", files:list[str]=[], out_folder:str=""):
             zs = []
             for x in xs:
                 sortPT(x)
-                zs.append(constit_to_img(x, 50, True, True, True).astype('float32'))
+                zs.append(constit_to_img(x, 50, NORM, ROTATE, FLIP).astype('float32'))
 
             z = merge_arrays(zs)
         else:
-            z = constit_to_img(x, 50, True, True, True).astype('float32')
+            z = constit_to_img(x, 50, NORM, ROTATE, FLIP).astype('float32')
         
         sig = z[np.where( y[:,0] == 1)]
         bkg = z[np.where( y[:,0] == 0)]
 
         print(n_shift_eta, n_shift_phi)
         
-        print(f"Done! Saving file to {outpath}")
+        print(f"Done! Saving file to {file_path}")
         heatmap(sig.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Signal with {len(sig)} Jets", path=outpath, fname="Signal")
         heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=outpath, fname="Background")
-        np.save(outpath+'/z_data.npy',z)
-        np.save(outpath+'/y_data.npy',y)
+        np.save(z_filepath,z)
+        np.save(y_filepath,y)
 
 def merge_data(src_1:str, src_2:str ,out:str, shuffle:bool):
     print(f"Merging {PATH_NOT_MERGED}/{src_1}/ with {PATH_NOT_MERGED}/{src_2}/")
@@ -306,11 +303,12 @@ def merge_data(src_1:str, src_2:str ,out:str, shuffle:bool):
         print(f"Shuffle merged array with seed {seed}")
         np.random.seed(seed)  
         np.random.shuffle(x_data)
+        np.random.seed(seed)          
         np.random.shuffle(y_data)        
     
-    os.makedirs(f"{PATH_NOT_PROCESSED}/{out}", exist_ok=True)
+    os.makedirs(f"{PATH_MERGED}/{out}", exist_ok=True)
     
-    print(f"Saving to {PATH_NOT_PROCESSED}/{out}/")
+    print(f"Saving to {PATH_MERGED}/{out}/")
     
-    np.save(f"{PATH_NOT_PROCESSED}/{out}/x_data.npy", x_data)
-    np.save(f"{PATH_NOT_PROCESSED}/{out}/y_data.npy", y_data)
+    np.save(f"{PATH_MERGED}/{out}/x_data.npy", x_data)
+    np.save(f"{PATH_MERGED}/{out}/y_data.npy", y_data)
