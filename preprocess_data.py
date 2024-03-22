@@ -281,8 +281,8 @@ def preprocess_data(src_folder:str="", files:list[str]=[]):
         print(n_shift_eta, n_shift_phi)
         
         print(f"Done! Saving file to {file_path}")
-        heatmap(sig.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Signal with {len(sig)} Jets", path=outpath, fname="Signal")
-        heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=outpath, fname="Background")
+        heatmap(sig.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Signal with {len(sig)} Jets", path=file_path, fname="Signal")
+        heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=file_path, fname="Background")
         np.save(z_filepath,z)
         np.save(y_filepath,y)
 
