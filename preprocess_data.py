@@ -235,7 +235,6 @@ def sortPT(arr:np.ndarray):
 
 def preprocess_data(src_folder:str="", files:list[str]=[]):
     
-    
     if len(files) == 0:
         print("Error: No filenames provided!")
         return

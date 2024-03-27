@@ -130,6 +130,7 @@ def merge_data_prompt(args:list[str]):
 def main():
     config = Settings()
     config.load()
+    config.create_dirs()
     while True:
         user_input = input()
         if user_input == "exit":

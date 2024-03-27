@@ -37,7 +37,7 @@ def command_handler(command:str, allowed_commands:list[str], functions:list, arg
                 return
     print(f"{command} is not a valid command")
 
-def argument_handler(args:list[str], allowed_args:list[str], functions:list) -> bool:
+def argument_handler(args:list[str], allowed_args:list[str], functions:list)->bool:
     if len(allowed_args) != len(functions):
         print("Internal Error! length of allowed_args != length of functions")
         return False
@@ -48,13 +48,13 @@ def argument_handler(args:list[str], allowed_args:list[str], functions:list) -> 
                 return True
         return False
 
-def max_arg_error(args: list[str], max_args:int):
+def max_arg_error(args: list[str], max_args:int)->bool:
     if args.__len__() > max_args:
         print(f"Expected {max_args} or less arguments, but got {args.__len__()}")
         return True
     return False
 
-def min_arg_error(args: list[str], min_args:int):
+def min_arg_error(args: list[str], min_args:int)->bool:
     if args.__len__() < min_args:
         print(f"Expected {min_args} or or more arguments, but got {args.__len__()}")
         return True
@@ -86,6 +86,13 @@ class Settings():
             self.init_factory()
             return
 
+    def create_dirs(self):
+        print(self.__dict__)
+        for atr in self.__dict__.keys():
+            print(atr)
+            if atr.beginswith("path_"):
+                os.makedirs(self.__getattribute__(atr), exist_ok=True)
+        
     def init_factory(self):
         self.path_trained = "trained_models"
         self.path_data = "data"
@@ -199,7 +206,7 @@ class TrainStats():
         self.start_time += time.time() - self.stopTime
 
 
-##class for models training hyper parameters
+##class for model training hyper parameters
 class HyperParams():
     def __init__(self,
                  batch_size:int = 64,
