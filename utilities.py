@@ -65,12 +65,18 @@ def invalid_args_error(args:list[str]):
 
 ##programm settings
 class Settings():
-    path_trained:str
-    path_data:str
-    path_results:str
-    path_models:str
-    path_trained_models:str
-    path_nm:str
+    
+    def __init__(self):        
+        #paths for models and test results
+        self.path_trained = "trained_models"
+        self.path_results = "test_results"
+        self.path_models = "models"
+        self.path_trained_models = "trained_models"
+        
+        #paths for datasets
+        self.path_data = "data"
+        self.path_notmerged = f"{self.path_data}/not_merged"
+        self.path_merged = f"{self.path_data}/merged"
 
     def save(self):   
         with open("config.pkl",'wb') as file:
@@ -80,29 +86,27 @@ class Settings():
     def load(self):
         try:
             with open("config.pkl", 'rb') as file:
+                print("Loading config.pkl")
                 return pickle.load(file)
         except IOError:
             print("No config file found. Initialize factory settings")
-            self.init_factory()
+            self.load_factory()
             return
 
     def create_dirs(self):
-        print(self.__dict__)
         for atr in self.__dict__.keys():
-            print(atr)
-            if atr.beginswith("path_"):
+            if atr.startswith("path_"):
                 os.makedirs(self.__getattribute__(atr), exist_ok=True)
-        
-    def init_factory(self):
-        self.path_trained = "trained_models"
-        self.path_data = "data"
-        self.path_results = "test_results"
-        self.path_models:str = "models"
-        self.path_trained_models:str = "trained_models"
-        self.path_nm:str = f"{self.path_data}/not_merged"
-        self.path_m:str = f"{self.path_data}/merged"
+    
+    def print(self):
+        for atr in self.__dict__.keys():
+            if atr.startswith("path_"):
+                print(atr, self.__getattribute__(atr))
+    
+    def load_factory(self):
+        self.__init__()
         self.save()
-
+        
 ## cpu unpickler
 class CPU_Unpickler(pickle.Unpickler):
     def find_class(self, module, name):

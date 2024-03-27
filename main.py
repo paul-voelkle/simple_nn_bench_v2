@@ -8,6 +8,10 @@ from test_networks import test_model
 from time import sleep
 from utilities import *
 
+config = Settings()
+config.load()
+config.create_dirs()
+
 
 #some drawing utilities
 def start_up():
@@ -24,12 +28,13 @@ def returning():
 
 #show functions
 def show(args:list[str]=[]):
-    allowed_args = ["models", "datasets"]
-    functions = [show_models, show_datasets]
+    allowed_args = ["models", "datasets", "config"]
+    functions = [show_models, show_datasets, show_config]
     if len(args) == 0:
         print("Usage:")
         print("show models [available/trained]")
         print("show datasets [not_merged/not_preprocessed/preprocessed]")
+        print("show config")
     elif argument_handler(args, allowed_args, functions):
         return
     else:
@@ -75,13 +80,15 @@ def show_datasets(args:str=list[str]):
     else:
         invalid_args_error([args])
         print("Usage:show datasets [not_merged/not_processed/preprocessed]")
-    
 
 def show_help(args:list[str]):
     if args == []:
         f = open('help.txt', 'r')
         print(f.read())
 
+def show_config(args:list[str]):
+    print("Program configuration:")
+    config.print()
 
 #program mode prompts
 def train_prompt(args:list[str]):
@@ -107,7 +114,7 @@ def preprocess_prompt(args:list[str]):
     if min_arg_error(args, 2):
         print("Usage: preprocess src_folder set_names")
         return
-    preprocess_data(src_folder=args[0], files=args[1:])
+    preprocess_data(src_folder=args[0], files=args[1:], config=config)
     returning()
 
 def load_prompt(args:list[str]):
@@ -115,22 +122,19 @@ def load_prompt(args:list[str]):
         print("Require Number of events!")
         return
     else:
-        load_pd4ml_data.load(int(args[0]))
+        load_pd4ml_data.load(int(args[0]), config=config)
         returning()
 
 def merge_data_prompt(args:list[str]):
-    if max_arg_error(args, 4) or min_arg_error(args, 4):
-        print("Usage: merge src_data_1 src_data_2 output shuffle[True/False]")
+    if max_arg_error(args, 3) or min_arg_error(args, 3):
+        print("Usage: merge src_data output shuffle[True/False]")
         return
-    merge_data(args[0], args[1], args[2], args[3]=='True')
+    merge_data(args[0], args[1], args[2]=='True', config=config)
     returning()
     return
 
 #main menu functions
 def main():
-    config = Settings()
-    config.load()
-    config.create_dirs()
     while True:
         user_input = input()
         if user_input == "exit":

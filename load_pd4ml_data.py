@@ -1,14 +1,19 @@
 import os
 from pd4ml import TopTagging
 import numpy as np
+from utilities import Settings
 
-def load(number_of_events:int=10000):
-    PATH="data/not_processed/TopTagging"
+def load(number_of_events:int=10000, config:Settings = None):
+    
+    if Settings == None:
+        return
+    
+    PATH = f"{config.path_merged}/TopTagging"
     
     print(f"Loading pd4ml dataset with {number_of_events} events:")
     
-    X_train_f, y_train_f = TopTagging.load('train', path = 'data/not_processed')
-    X_test_f, y_test_f = TopTagging.load('test', path = 'data/not_processed')
+    X_train_f, y_train_f = TopTagging.load('train', path = config.path_merged)
+    X_test_f, y_test_f = TopTagging.load('test', path = config.path_merged)
 
     y_train_ft = []
     y_test_ft = []
@@ -37,13 +42,10 @@ def load(number_of_events:int=10000):
 
     print(f"Saving to {PATH}")
     
-    for paths in ["test", "train", "val"]:
-        if not os.path.exists(f"{PATH}/{paths}"):
-            os.makedirs(f"{PATH}/{paths}", exist_ok=True)
+    for set in [["test", X_test, y_test], ["train", X_train, y_train], ["val", X_val, y_val]]:
+        if not os.path.exists(f"{PATH}/{set[0]}"):
+            os.makedirs(f"{PATH}/{set[0]}", exist_ok=True)
+        print(f"Saving to {set[0]} data to {PATH}/{set[0]}")
+        np.save(f"{PATH}/{set[0]}/x_data.npy",set[1])
+        np.save(f"{PATH}/{set[0]}/y_data.npy",set[2])
     
-    np.save(f"{PATH}/train/x_data.npy",X_train)
-    np.save(f"{PATH}/train/y_data.npy",y_train)
-    np.save(f"{PATH}/test/x_data.npy",X_test)
-    np.save(f"{PATH}/test/y_data.npy",y_test)
-    np.save(f"{PATH}/val/x_data.npy",X_val)
-    np.save(f"{PATH}/val/y_data.npy",y_val)

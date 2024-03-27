@@ -2,12 +2,7 @@ import sys
 import numpy as np
 from plot_utils import heatmap
 import os
-from utilities import merge_arrays, split_array, confirm, command_handler
-
-
-PATH_NOT_MERGED = "./data/not_merged" 
-PATH_MERGED = "./data/merged"
-
+from utilities import merge_arrays, split_array, confirm, command_handler, Settings
 
 MAX_DATA_LENGTH = 50000
 
@@ -233,7 +228,10 @@ def sortPT(arr:np.ndarray):
     for i in range(len(arr)):
         arr[i] = sortEventsPt(arr[i])
 
-def preprocess_data(src_folder:str="", files:list[str]=[]):
+def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None):
+    
+    if config == None:
+        return
     
     if len(files) == 0:
         print("Error: No filenames provided!")
@@ -247,7 +245,7 @@ def preprocess_data(src_folder:str="", files:list[str]=[]):
         pTCut = False
     
     for name in files:
-        file_path = f"{PATH_MERGED}/{src_folder}/{name}"
+        file_path = f"{config.path_merged}/{src_folder}/{name}"
         x_filepath = f"{file_path}/x_data.npy"
         y_filepath = f"{file_path}/y_data.npy"
         z_filepath = f"{file_path}/z_data.npy"
@@ -285,14 +283,18 @@ def preprocess_data(src_folder:str="", files:list[str]=[]):
         np.save(z_filepath,z)
         np.save(y_filepath,y)
 
-def merge_data(src_1:str, src_2:str ,out:str, shuffle:bool):
-    print(f"Merging {PATH_NOT_MERGED}/{src_1}/ with {PATH_NOT_MERGED}/{src_2}/")
+def merge_data(src:str, out:str, shuffle:bool, config:Settings):
     
-    x_data_1 = np.load(f"{PATH_NOT_MERGED}/{src_1}/x_data.npy")
-    y_data_1 = np.load(f"{PATH_NOT_MERGED}/{src_1}/y_data.npy")
+    if config == None:
+        return    
     
-    x_data_2 = np.load(f"{PATH_NOT_MERGED}/{src_2}/x_data.npy")
-    y_data_2 = np.load(f"{PATH_NOT_MERGED}/{src_2}/y_data.npy")
+    print(f"Merging data {config.path_notmerged}/{src}")
+    
+    x_data_1 = np.load(f"{config.path_notmerged}/{src}/signal/x_data.npy")
+    y_data_1 = np.load(f"{config.path_notmerged}/{src}/signal/y_data.npy")
+    
+    x_data_2 = np.load(f"{config.path_notmerged}/{src}/background/x_data.npy")
+    y_data_2 = np.load(f"{config.path_notmerged}/{src}/background/y_data.npy")
     
     x_data = np.concatenate((x_data_1, x_data_2), axis=0)
     y_data = np.concatenate((y_data_1, y_data_2), axis=0)
@@ -305,9 +307,9 @@ def merge_data(src_1:str, src_2:str ,out:str, shuffle:bool):
         np.random.seed(seed)          
         np.random.shuffle(y_data)        
     
-    os.makedirs(f"{PATH_MERGED}/{out}", exist_ok=True)
+    os.makedirs(f"{config.path_merged}/{out}", exist_ok=True)
     
-    print(f"Saving to {PATH_MERGED}/{out}/")
+    print(f"Saving to {config.path_merged}/{out}/")
     
-    np.save(f"{PATH_MERGED}/{out}/x_data.npy", x_data)
-    np.save(f"{PATH_MERGED}/{out}/y_data.npy", y_data)
+    np.save(f"{config.path_merged}/{out}/x_data.npy", x_data)
+    np.save(f"{config.path_merged}/{out}/y_data.npy", y_data)
