@@ -6,5 +6,5 @@ debug_pad.ipynb
 1_top_plots.ipynb
 event_files/
 Cards/
-__pycache__/
-models/__pycache__/
+*.pyc
+*.pyo

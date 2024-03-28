@@ -316,7 +316,7 @@ def val_pass( dataloader, model, loss_fn ):
     vls /= num_batches
     return vls, nls, kls
 
-def load_dataset(name:str="", path:str="data/preprocessed", trainSetBool:bool=False, params:HyperParams=HyperParams())->DataLoader:
+def load_dataset(name:str="", path:str="data/merged", trainSetBool:bool=False, params:HyperParams=HyperParams())->DataLoader:
     
     try:
         z = torch.Tensor(np.load(f"{path}/{name}/z_data.npy").reshape(-1, 1, 40,40).astype('float32')).to(params.device)
