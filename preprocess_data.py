@@ -2,7 +2,7 @@ import sys
 import numpy as np
 from plot_utils import heatmap
 import os
-from utilities import merge_arrays, split_array, confirm, command_handler, Settings
+from utilities import merge_arrays, split_array, confirm, Settings
 
 MAX_DATA_LENGTH = 50000
 

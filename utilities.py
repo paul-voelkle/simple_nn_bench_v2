@@ -63,7 +63,7 @@ def min_arg_error(args: list[str], min_args:int)->bool:
 def invalid_args_error(args:list[str]):
     print(f"{args} is/are not valid argument(s)")
 
-##programm settings
+##program settings
 class Settings():
     
     def __init__(self):        
@@ -71,7 +71,6 @@ class Settings():
         self.path_trained = "trained_models"
         self.path_results = "test_results"
         self.path_models = "models"
-        self.path_trained_models = "trained_models"
         
         #paths for datasets
         self.path_data = "data"
@@ -120,39 +119,23 @@ class TrainStats():
     
     stopTime = 0.0
     
-    def __init__(self, 
-                epoch:int = 0, 
-                epochs:int = 0, 
-                trn_loss:float = 0, 
-                val_loss:float = 0, 
-                trn_losses:list[float] = [],
-                val_losses:list[float] = [],
-                elapsed_time:float = 0, 
-                trig:int = 0, 
-                val_slope:float = -1, 
-                batch_curr:int = 0, 
-                batch_tot:int = 0,
-                name:str = "",
-                dataset:list[str] = [],
-                device:str = "",
-                early_stopping:bool = False):
-        
-        self.epoch = epoch
-        self.epochs = epochs
-        self.trn_loss = trn_loss
-        self.trn_losses = trn_losses
-        self.val_loss = val_loss
-        self.val_losses = val_losses
-        self.start_time = 0.0
-        self.elapsed_time = elapsed_time
-        self.trig = trig
-        self.val_slope = val_slope
-        self.batch_curr = batch_curr
-        self.batch_tot = batch_tot
-        self.name = name
-        self.device = device
-        self.early_stopping = early_stopping
-        self.dataset = dataset
+    def __init__(self):
+        self.epoch:int = 0
+        self.epochs:int = 0
+        self.trn_loss:float = 0.0
+        self.trn_losses:list[float] = []
+        self.val_loss:float = 0.0
+        self.val_losses:list[float] = []
+        self.start_time:float = 0.0
+        self.elapsed_time:float = 0.0
+        self.trig:int = 0
+        self.val_slope:float = -1.0
+        self.batch_curr:int = 0
+        self.batch_tot:int = 0
+        self.name:str = ""
+        self.device:str = ""
+        self.early_stopping:bool = True
+        self.dataset:list[str] = []
         self.startTimer()
     
     def update(self):
@@ -186,7 +169,6 @@ class TrainStats():
         print(f"Saving Training Stats to {path}/hyper_parameter.pkl")
         with open(f"{path}/stats.pkl",'wb') as file:
             pickle.dump(self,file)
-    
 
     def load(path):
         
@@ -212,28 +194,18 @@ class TrainStats():
 
 ##class for model training hyper parameters
 class HyperParams():
-    def __init__(self,
-                 batch_size:int = 64,
-                 epochs:int = 300,
-                 loss_fn:nn.Module = nn.BCELoss(),
-                 patience:int = 10,
-                 val_slope_sample_length:int = 10,
-                 max_val_loss_slope:float = -1e-06,
-                 lr:float = 5e-4,
-                 optimizer:torch.optim = None,
-                 early_stopping:bool = True,
-                 training_size:int = 0):
-        self.batch_size = batch_size
-        self.epochs = epochs
-        self.loss_fn = loss_fn
-        self.patience = patience
-        self.max_val_slope = max_val_loss_slope
-        self.val_sample_length = val_slope_sample_length
-        self.lr = lr
-        self.optimizer = optimizer
-        self.device = init_device() 
-        self.early_stopping = early_stopping
-        self.training_size = training_size
+    def __init__(self):
+        self.batch_size:int = 64
+        self.epochs:int = 300
+        self.loss_fn:nn.Module = nn.BCELoss()
+        self.patience:int = 10
+        self.max_val_slope:float = -1e-06
+        self.val_sample_length:int = 10
+        self.lr:float = 5e-4
+        self.optimizer:torch.optim = None
+        self.device = "cuda:0" if cuda.is_available() else "cpu"
+        self.early_stopping:bool = True
+        self.training_size:int = 0
 
     def print_param(self):
         print(tabulate([["Optimizer","optimizer", self.optimizer, "Loss Function", "loss_fn", self.loss_fn],
@@ -250,7 +222,6 @@ class HyperParams():
         with open(f"{path}/hyper_parameter.pkl",'wb') as file:
             pickle.dump(self,file)
     
-
     def load(path):
         try:
             with open(f"{path}/hyper_parameter.pkl", 'rb') as file:
@@ -263,7 +234,7 @@ class HyperParams():
             raise
     
     def edit(self):
-        if confirm("Edit Hyper Parmeters?"):
+        if confirm("Edit Hyper Parameters?"):
             print("Editing parameters. To show parameters:Show, To exit type:done, Usage: parameterName parameterValue")
             while True:
                 command, arg = input_handler(input())
@@ -282,7 +253,6 @@ class HyperParams():
 
 
 ##functions for training and testing the models
-
 def init_device():
     device = "cuda:0" if cuda.is_available() else "cpu"
     print(f"Using {device} device")
@@ -316,7 +286,12 @@ def val_pass( dataloader, model, loss_fn ):
     vls /= num_batches
     return vls, nls, kls
 
-def load_dataset(name:str="", path:str="data/merged", trainSetBool:bool=False, params:HyperParams=HyperParams())->DataLoader:
+def load_dataset(name:str="", trainSetBool:bool=False, params:HyperParams=HyperParams(), config:Settings=None)->DataLoader:
+    
+    if config==None:
+        return
+    
+    path = config.path_merged
     
     try:
         z = torch.Tensor(np.load(f"{path}/{name}/z_data.npy").reshape(-1, 1, 40,40).astype('float32')).to(params.device)
@@ -334,17 +309,6 @@ def load_dataset(name:str="", path:str="data/merged", trainSetBool:bool=False, p
 
     dataset = models.dataset.dataset(z,y)    
     return DataLoader(dataset=dataset, batch_size=params.batch_size, shuffle=True)
-
-def init_hyperparams():
-    params = HyperParams()
-    separator()
-    print("Current Hyper Parameters:")
-    separator()
-    params.print_param()
-    separator()
-    params.edit()
-            
-    return params
 
 def init_model(name:str, params:HyperParams):
     print(f"Initializing {name}")

@@ -1,12 +1,10 @@
 import os
 import models
-from print_data_utils import *
-import time
 from plot_utils import plot_2d
 import numpy as np
 import torch
 from sklearn.linear_model import LinearRegression
-from utilities import *
+from utilities import TrainStats, HyperParams, Settings, val_pass, confirm, load_dataset, separator, init_model
 
 def train_epoch( dataloader, model, loss_fn, optimizer, TrainStats:TrainStats):
     
@@ -95,8 +93,9 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
     plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["Training losses", "Validation losses"], title=[model.name])
     return 
 
-def save_model(model:models, TrainStats:TrainStats, params:HyperParams):
-    PATH = f"trained_models/{model.name}"
+def save_model(model:models, TrainStats:TrainStats, params:HyperParams, config:Settings):
+    
+    PATH = f"{config.path_trained}/{model.name}"
 
     if confirm("Save Model?"):
         print(f"Standart path: {PATH}")
@@ -115,22 +114,37 @@ def save_model(model:models, TrainStats:TrainStats, params:HyperParams):
         print("Model not saved.")
 
 
-def train_network(model_name:str, train_set:str, val_set:str):
-    param = init_hyperparams()
-    stats = TrainStats(device=param.device, dataset=[train_set, val_set])
+def train_network(model_name:str, train_set:str, val_set:str, config:Settings):
+    if config == None:
+        return
+    
+    param = HyperParams()
+    
+    separator()
+    print("Current Hyper Parameters:")
+    separator()
+    param.print_param()
+    separator()
+    param.edit()
+    
     try:
-        train_dl = load_dataset(name=train_set, params=param, trainSetBool=True)
+        train_dl = load_dataset(name=train_set, params=param, trainSetBool=True, config=config)
     except:
         return
 
     try:
-        val_dl = load_dataset(name=val_set, params=param)
+        val_dl = load_dataset(name=val_set, params=param, config=config)
     except:
         return
     
     model = init_model(name=model_name, params=param)
+    
+    stats = TrainStats()
+    stats.device = param.device
+    stats.dataset = [train_set, val_set]
+    
     param.optimizer = torch.optim.Adam(params=model.parameters(), lr=param.lr)
     train_loop(model=model, params=param, train_dl=train_dl, val_dl=val_dl, TrainStats=stats)
-    save_model(model=model, TrainStats=stats, params=param)
+    save_model(model=model, TrainStats=stats, params=param, config=config)
     return
 

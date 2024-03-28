@@ -1,16 +1,13 @@
-from utilities import HyperParams, TrainStats, load_dataset, load_model, clear, separator, confirm, store_results, init_device
+from utilities import HyperParams, TrainStats,  Settings, load_dataset, load_model, clear, separator, confirm, store_results, init_device, val_pass
 from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np 
 import torch
-from torch import nn
 from torch.utils.data import DataLoader
-from print_data_utils import separator
-from training_network import val_pass
 from plot_utils import plot_2d, hist, scatter
 import os
 
-PATH = "trained_models"
-RESULTS_PATH = "test_results"
+# PATH = "trained_models"
+# RESULTS_PATH = "test_results"
 TICKS = np.linspace(start=0, stop=1, num=11)
 
 def get_prediction(dataloader:DataLoader, model, params:HyperParams,  n_monte=30):
@@ -51,9 +48,12 @@ def closest_point(array, tpr_p=0.3):
     return np.argmin(dist)
 
 
-def test_model(path:str="", test_set:str=""):
+def test_model(path:str="", test_set:str="", config:Settings=None):
     
-    result_path = f"{RESULTS_PATH}/{path}"
+    if config == None:
+        return
+    
+    result_path = f"{config.path_results}/{path}"
 
     clear()
     separator()
@@ -62,13 +62,14 @@ def test_model(path:str="", test_set:str=""):
     
     if os.path.exists(result_path):
         if confirm(f"Path {result_path} already exists. Previous results might be overwritten. Edit path?"):
-            result_path = input()
+            print(f"Enter new path (relative to {config.path_results})")
+            result_path = f"{config.path_results}/{input()}"
 
     print(f"Creating directory {result_path}")
     os.makedirs(result_path, exist_ok=True)
 
     #load saved model, training stats and hyperparam
-    model_path = f"{PATH}/{path}"
+    model_path = f"{config.path_trained}/{path}"
     params = HyperParams.load(model_path)
     stats = TrainStats.load(model_path)
     params.device = init_device()
@@ -80,12 +81,17 @@ def test_model(path:str="", test_set:str=""):
         STATS_DATASET = True
     except:
         STATS_DATASET = False
-        print("Old Training Stats ")
+    
     #show hyperparamter edit promt
+    separator()
+    print("Current Hyper Parameters:")
+    separator()
+    params.print_param()
+    separator()
     params.edit()
 
     #load test datat set
-    test_dl = load_dataset(name=test_set, params=params)
+    test_dl = load_dataset(name=test_set, params=params, config=config)
 
     #evaluate models accuracy on test dataset
     test_pred, test_loss, test_corr_perc = eval_net(model, test_dl, params.loss_fn)

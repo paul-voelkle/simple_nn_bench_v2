@@ -1,12 +1,11 @@
 import os 
-import sys
 import models
-import load_pd4ml_data
+from load_pd4ml_data import load
 from preprocess_data import preprocess_data, merge_data
 from training_network import train_network
 from test_networks import test_model
 from time import sleep
-from utilities import *
+from utilities import Settings, clear, separator, argument_handler, invalid_args_error, max_arg_error, min_arg_error, input_handler, command_handler
 
 config = Settings()
 config.load()
@@ -90,13 +89,14 @@ def show_config(args:list[str]):
     print("Program configuration:")
     config.print()
 
+
 #program mode prompts
 def train_prompt(args:list[str]):
     if max_arg_error(args, 3) or min_arg_error(args, 3):
         print("Usage: train modelname trainingSet valSet")
     elif args[0] in models.__models__:
         print(f"Start training {args[0]}")
-        train_network(model_name=args[0], train_set=args[1], val_set=args[2])
+        train_network(model_name=args[0], train_set=args[1], val_set=args[2], config=config)
         returning()
     else:
         print(f"{args[0]} is not a valid model!")
@@ -107,7 +107,7 @@ def test_prompt(args:list[str]):
         show(["models", "trained"])
         print("Usage: test modelname test_set")
         return
-    test_model(args[0], args[1])
+    test_model(args[0], args[1], config=config)
     returning()
 
 def preprocess_prompt(args:list[str]):
@@ -122,7 +122,7 @@ def load_prompt(args:list[str]):
         print("Require Number of events!")
         return
     else:
-        load_pd4ml_data.load(int(args[0]), config=config)
+        load(int(args[0]), config=config)
         returning()
 
 def merge_data_prompt(args:list[str]):
@@ -132,6 +132,8 @@ def merge_data_prompt(args:list[str]):
     merge_data(args[0], args[1], args[2]=='True', config=config)
     returning()
     return
+
+
 
 #main menu functions
 def main():
