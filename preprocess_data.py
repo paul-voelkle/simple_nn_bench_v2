@@ -248,6 +248,7 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         file_path = f"{config.path_merged}/{src_folder}/{name}"
         x_filepath = f"{file_path}/x_data.npy"
         y_filepath = f"{file_path}/y_data.npy"
+        y_filepath_prep = f"{file_path}/y_data_prep.npy"
         z_filepath = f"{file_path}/z_data.npy"
         
         if not os.path.exists(file_path):
@@ -256,9 +257,17 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         x = np.load(x_filepath)
         y = np.load(y_filepath)
         x, y = remove_zero_pT(x, y)
-        
+                
         if pTCut:
             x, y = pT_cut(x, y, float(ptMin), float(ptMax))
+        
+        if confirm(f"Limit size of {file_path}"):
+            print("Enter size:")
+            size = int(input())
+            if size < len(x):
+                print(f"Limiting size to {size}")
+                x = x[0:size,:,:]
+                y = y[0:size,:]        
         
         #split x array for preprocessing:
         if len(x) > MAX_DATA_LENGTH:
@@ -281,7 +290,7 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         heatmap(sig.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Signal with {len(sig)} Jets", path=file_path, fname="Signal")
         heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=file_path, fname="Background")
         np.save(z_filepath,z)
-        np.save(y_filepath,y)
+        np.save(y_filepath_prep,y)
 
 def merge_data(src:str, out:str, shuffle:bool, config:Settings):
     

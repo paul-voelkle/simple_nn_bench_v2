@@ -48,13 +48,15 @@ def closest_point(array, tpr_p=0.3):
     return np.argmin(dist)
 
 
-def test_model(path:str="", test_set:str="", config:Settings=None):
+def test_model(path:str="", dataset:str="", config:Settings=None):
     
     if config == None:
         return
     
     result_path = f"{config.path_results}/{path}"
 
+    test_set = f"{dataset}/test"
+    
     clear()
     separator()
     print(f"Testing model: {path}")

@@ -114,9 +114,12 @@ def save_model(model:models, TrainStats:TrainStats, params:HyperParams, config:S
         print("Model not saved.")
 
 
-def train_network(model_name:str, train_set:str, val_set:str, config:Settings):
+def train_network(model_name:str, dataset:str, config:Settings):
     if config == None:
         return
+    
+    train_set = f"{dataset}/train"
+    val_set = f"{dataset}/val"
     
     param = HyperParams()
     

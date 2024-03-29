@@ -299,13 +299,13 @@ def load_dataset(name:str="", trainSetBool:bool=False, params:HyperParams=HyperP
         raise
     
     try:
-        y = torch.Tensor(np.load(f"{path}/{name}/y_data.npy")).to(params.device)
+        y = torch.Tensor(np.load(f"{path}/{name}/y_data_prep.npy")).to(params.device)
     except:
         print(f"{path}/{name}/y_data.npy does not exist! Return to main menu")
         raise
 
     if trainSetBool:
-        params.training_size = np.load(f"{path}/{name}/y_data.npy").shape[0]
+        params.training_size = np.load(f"{path}/{name}/y_data_prep.npy").shape[0]
 
     dataset = models.dataset.dataset(z,y)    
     return DataLoader(dataset=dataset, batch_size=params.batch_size, shuffle=True)

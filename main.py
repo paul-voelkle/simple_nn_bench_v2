@@ -92,11 +92,11 @@ def show_config(args:list[str]):
 
 #program mode prompts
 def train_prompt(args:list[str]):
-    if max_arg_error(args, 3) or min_arg_error(args, 3):
-        print("Usage: train modelname trainingSet valSet")
+    if max_arg_error(args, 2) or min_arg_error(args, 2):
+        print("Usage: train modelname dataset")
     elif args[0] in models.__models__:
         print(f"Start training {args[0]}")
-        train_network(model_name=args[0], train_set=args[1], val_set=args[2], config=config)
+        train_network(model_name=args[0], dataset=args[1], config=config)
         returning()
     else:
         print(f"{args[0]} is not a valid model!")
