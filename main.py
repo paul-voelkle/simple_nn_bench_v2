@@ -60,6 +60,9 @@ def show_models(args:str=list[str]):
         except:
             print("Directory trained_models/ does not exist!")
         separator()
+    elif args[0] in models.__models__:
+        model_class = getattr(models, args[0])
+        print(model_class.Model())    
     else:
         invalid_args_error(args)
         print("Usage:show models [available/trained]")
@@ -107,8 +110,12 @@ def test_prompt(args:list[str]):
         show(["models", "trained"])
         print("Usage: test modelname test_set")
         return
-    test_model(args[0], args[1], config=config)
-    returning()
+    elif args[0] in models.__models__:
+        test_model(args[0], args[1], config=config)
+        returning()
+    else:
+        print(f"{args[0]} is not a valid model")
+        show(["models", "available"])
 
 def preprocess_prompt(args:list[str]):
     if min_arg_error(args, 2):

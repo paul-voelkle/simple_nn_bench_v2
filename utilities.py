@@ -201,7 +201,7 @@ class HyperParams():
         self.patience:int = 10
         self.max_val_slope:float = -1e-06
         self.val_sample_length:int = 10
-        self.lr:float = 5e-4
+        self.lr:float = 5e-5
         self.optimizer:torch.optim = None
         self.device = "cuda:0" if cuda.is_available() else "cpu"
         self.early_stopping:bool = True

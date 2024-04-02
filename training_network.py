@@ -34,7 +34,7 @@ def train_epoch( dataloader, model, loss_fn, optimizer, TrainStats:TrainStats):
         optimizer.step()
         
         # print the training loss every 100 updates
-        if batch % 100 == 0:
+        if batch % 50 == 0:
             loss, current = loss.item(), batch * len(X)
             TrainStats.batch_curr = current
             TrainStats.trn_loss = loss
@@ -64,6 +64,7 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         TrainStats.epoch = t
         
         train_epoch( train_dl, model, params.loss_fn, params.optimizer, TrainStats)        
+        
         TrainStats.trn_loss, nls, kls, = val_pass( train_dl, model, params.loss_fn )
         TrainStats.trn_losses.append( TrainStats.trn_loss )
         
@@ -78,6 +79,17 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         else:
             TrainStats.trig = 0
         
+        #plot losses every 15 epochs
+        if t%15 == 0:
+            TrainStats.stopTimer()
+            plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["Training losses", "Validation losses"], title=[model.name])
+            TrainStats.resumeTimer()            
+        
+        if t%10 == 0:
+            params.lr = params.lr/2
+            for g in params.optimizer.param_groups:
+                g['lr'] = params.lr                 
+        
         if TrainStats.trig >= params.patience:
             TrainStats.stopTimer()
             plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["Training losses", "Validation losses"], title=[model.name])
@@ -86,6 +98,9 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
                 print("Done!")
                 return 
             else:
+                params.edit()
+                for g in params.optimizer.param_groups:
+                    g['lr'] = params.lr     
                 TrainStats.resumeTimer()
                 TrainStats.trig = 0
     
