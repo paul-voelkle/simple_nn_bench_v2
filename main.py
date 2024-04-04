@@ -16,7 +16,7 @@ config.create_dirs()
 def start_up():
     clear()
     separator()
-    print("Simple NN-Bench v0.0.3")
+    print("Simple NN-Bench v0.0.4")
     separator()
 
 def returning():
@@ -160,7 +160,7 @@ def main_menu_input(input:str=""):
     commands = ["help", "show", "train", "test", "preprocess", "load", "merge"]
     functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt]
     if command == "":
-        print("Try help for commands or exit to close program")
+        print("Type help for commands or exit to close program")
         return
     else:
         command_handler(command, commands, functions, args)

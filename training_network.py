@@ -169,7 +169,7 @@ def train_network(model_name:str, dataset:str, config:Settings):
     stats.device = params.device
     stats.dataset = [train_set, val_set]
     
-    param.optimizer = torch.optim.Adam(params=model.parameters(), lr=params.lr)
+    params.optimizer = torch.optim.Adam(params=model.parameters(), lr=params.lr)
     train_loop(model=model, params=params, train_dl=train_dl, val_dl=val_dl, TrainStats=stats)
     save_model(model=model, TrainStats=stats, params=params, config=config)
     return

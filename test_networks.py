@@ -72,8 +72,8 @@ def test_model(path:str="", dataset:str="", config:Settings=None):
 
     #load saved model, training stats and hyperparam
     model_path = f"{config.path_trained}/{path}"
-    params = HyperParams.load(model_path)
-    stats = TrainStats.load(model_path)
+    params = HyperParams().load(model_path)
+    stats = TrainStats().load(model_path)
     params.device = init_device()
     print(stats.name)
     model = load_model(stats.name, params, model_path)

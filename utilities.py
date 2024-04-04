@@ -63,9 +63,35 @@ def min_arg_error(args: list[str], min_args:int)->bool:
 def invalid_args_error(args:list[str]):
     print(f"{args} is/are not valid argument(s)")
 
+class DataIO():
+    def __init__(self, filename:str, path_default:str):
+        self.filename = filename
+        self.path_default = path_default
+        
+    def save(self, path:str):
+        os.makedirs(path, exist_ok=True)
+        print(f"Saving to {path}/{self.filename}.pkl")
+        with open(f"{path}/{self.filename}",'wb') as file:
+            pickle.dump(self,file)
+
+    def load(self, path:str):        
+        try:
+            with open(f"{path}/{self.filename}", 'rb') as file:
+                if cuda.is_available():
+                    return pickle.load(file)
+                else:
+                    return CPU_Unpickler(file).load()
+        except:
+            print(f"{path}/{self.filename} not found!")
+            raise
+    
+    def load_factory(self):
+        self.load(self.path_default)
+
 ##program settings
-class Settings():
-    def __init__(self):        
+class Settings(DataIO):
+    def __init__(self):
+        super().__init__(filename="config.pkl", path_default=".")        
         #paths for models and test results
         self.path_trained = "trained_models"
         self.path_results = "test_results"
@@ -75,7 +101,6 @@ class Settings():
         self.path_data = "data"
         self.path_notmerged = f"{self.path_data}/not_merged"
         self.path_merged = f"{self.path_data}/merged"
-        
 
     def save(self):   
         with open("config.pkl",'wb') as file:
@@ -115,11 +140,12 @@ class CPU_Unpickler(pickle.Unpickler):
             return super().find_class(module, name)
 
 ##class to track model training statistics
-class TrainStats():
+class TrainStats(DataIO):
     
     stopTime = 0.0
     
     def __init__(self):
+        super().__init__(filename="stats.pkl", path_default=".")
         self.epoch:int = 0
         self.epochs:int = 0
         self.trn_loss:float = 0.0
@@ -154,7 +180,7 @@ class TrainStats():
         print(f"Train Loss: {self.trn_loss}")
         print(f"Validation Loss: {self.val_loss}")
         print(f"Trigger count: {self.trig}")
-        print(f"Slope of last 10 value losses: {self.val_slope}")
+        print(f"Slope of last value losses: {self.val_slope}")
         self.getTimer()
         m, s = formatTime(self.elapsed_time)
         print(f"Elapsed Time: {m} min {s} s")
@@ -163,25 +189,6 @@ class TrainStats():
     def startTimer(self):
         self.start_time = time.time()
     
-    def save(self, path):
-        
-        os.makedirs(path, exist_ok=True)
-        print(f"Saving Training Stats to {path}/hyper_parameter.pkl")
-        with open(f"{path}/stats.pkl",'wb') as file:
-            pickle.dump(self,file)
-
-    def load(path):
-        
-        try:
-            with open(f"{path}/stats.pkl", 'rb') as file:
-                if cuda.is_available():
-                    return pickle.load(file)
-                else:
-                    return CPU_Unpickler(file).load()
-        except:
-            print(f"{path}/stats.pkl not found!")
-            raise
-
     def getTimer(self):
         self.elapsed_time = round(time.time() - self.start_time,3)
         
@@ -193,9 +200,9 @@ class TrainStats():
 
 
 ##class for model training hyper parameters
-class HyperParams():
+class HyperParams(DataIO):
     def __init__(self):
-
+        super().__init__(filename="hyper_parameter.pkl", path_default=".")
         self.batch_size:int = 64
         self.epochs:int = 300
         self.loss_fn:nn.Module = nn.BCELoss()
@@ -216,24 +223,6 @@ class HyperParams():
                         ["Sample length for Slope", "val_sample_length", self.val_sample_length]]
                        , headers=["Description","Name","Value", "Description", "Name","Value"]))
 
-    def save(self, path):
-        
-        os.makedirs(path, exist_ok=True)
-        print(f"Saving Hyper Parameter to {path}/hyper_parameter.pkl")
-        with open(f"{path}/hyper_parameter.pkl",'wb') as file:
-            pickle.dump(self,file)
-    
-    def load(self, path):
-        try:
-            with open(f"{path}/hyper_parameter.pkl", 'rb') as file:
-                if cuda.is_available():
-                    return pickle.load(file)
-                else:
-                    return CPU_Unpickler(file).load()
-        except:
-            print(f"{path}/hyper_parameter.pkl not found!")
-            raise IOError
-    
     def edit(self):
         if confirm("Edit Hyper Parameters?"):
             print("Editing parameters. To show parameters:Show, To exit type:done, Usage: parameterName parameterValue")
