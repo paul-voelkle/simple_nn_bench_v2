@@ -74,6 +74,7 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         #early stopping        
         if params.early_stopping and t > params.val_sample_length:
             TrainStats.val_slope = getSlope(np.array(TrainStats.val_losses), params.val_sample_length) 
+        
         if TrainStats.val_slope >= params.max_val_slope:
             TrainStats.trig += 1
         else:
@@ -82,17 +83,18 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         #plot losses every 15 epochs
         if t%15 == 0:
             TrainStats.stopTimer()
-            plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["Training losses", "Validation losses"], title=[model.name])
+            plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["training losses", "validation losses"], title=model.name)
             TrainStats.resumeTimer()            
         
-        if t%10 == 0:
+        #update learning rate every 30 epochs
+        if t%30 == 0:
             params.lr = params.lr/2
             for g in params.optimizer.param_groups:
                 g['lr'] = params.lr                 
         
         if TrainStats.trig >= params.patience:
             TrainStats.stopTimer()
-            plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["Training losses", "Validation losses"], title=[model.name])
+            plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["training losses", "validation losses"], title=model.name)
             #epochs_of_early_stopping.append(t)
             if confirm("Early stopping triggered! Stop?"):
                 print("Done!")
@@ -136,33 +138,39 @@ def train_network(model_name:str, dataset:str, config:Settings):
     train_set = f"{dataset}/train"
     val_set = f"{dataset}/val"
     
-    param = HyperParams()
+    print("Loading last Hyperparameters:")
+    try:
+        params = HyperParams().load(".")
+    except:
+        print("No last Hyperparameter found. Using default settings")
+        params = HyperParams()
     
     separator()
     print("Current Hyper Parameters:")
     separator()
-    param.print_param()
+    params.print_param()
     separator()
-    param.edit()
+    params.edit()
+    params.save(".")
     
     try:
-        train_dl = load_dataset(name=train_set, params=param, trainSetBool=True, config=config)
+        train_dl = load_dataset(name=train_set, params=params, trainSetBool=True, config=config)
     except:
         return
 
     try:
-        val_dl = load_dataset(name=val_set, params=param, config=config)
+        val_dl = load_dataset(name=val_set, params=params, config=config)
     except:
         return
     
-    model = init_model(name=model_name, params=param)
+    model = init_model(name=model_name, params=params)
     
     stats = TrainStats()
-    stats.device = param.device
+    stats.device = params.device
     stats.dataset = [train_set, val_set]
     
-    param.optimizer = torch.optim.Adam(params=model.parameters(), lr=param.lr)
-    train_loop(model=model, params=param, train_dl=train_dl, val_dl=val_dl, TrainStats=stats)
-    save_model(model=model, TrainStats=stats, params=param, config=config)
+    param.optimizer = torch.optim.Adam(params=model.parameters(), lr=params.lr)
+    train_loop(model=model, params=params, train_dl=train_dl, val_dl=val_dl, TrainStats=stats)
+    save_model(model=model, TrainStats=stats, params=params, config=config)
     return
 

@@ -65,7 +65,6 @@ def invalid_args_error(args:list[str]):
 
 ##program settings
 class Settings():
-    
     def __init__(self):        
         #paths for models and test results
         self.path_trained = "trained_models"
@@ -76,6 +75,7 @@ class Settings():
         self.path_data = "data"
         self.path_notmerged = f"{self.path_data}/not_merged"
         self.path_merged = f"{self.path_data}/merged"
+        
 
     def save(self):   
         with open("config.pkl",'wb') as file:
@@ -195,6 +195,7 @@ class TrainStats():
 ##class for model training hyper parameters
 class HyperParams():
     def __init__(self):
+
         self.batch_size:int = 64
         self.epochs:int = 300
         self.loss_fn:nn.Module = nn.BCELoss()
@@ -203,9 +204,9 @@ class HyperParams():
         self.val_sample_length:int = 10
         self.lr:float = 5e-5
         self.optimizer:torch.optim = None
-        self.device = "cuda:0" if cuda.is_available() else "cpu"
         self.early_stopping:bool = True
         self.training_size:int = 0
+        self.device = "cuda:0" if cuda.is_available() else "cpu"
 
     def print_param(self):
         print(tabulate([["Optimizer","optimizer", self.optimizer, "Loss Function", "loss_fn", self.loss_fn],
@@ -222,7 +223,7 @@ class HyperParams():
         with open(f"{path}/hyper_parameter.pkl",'wb') as file:
             pickle.dump(self,file)
     
-    def load(path):
+    def load(self, path):
         try:
             with open(f"{path}/hyper_parameter.pkl", 'rb') as file:
                 if cuda.is_available():
@@ -231,7 +232,7 @@ class HyperParams():
                     return CPU_Unpickler(file).load()
         except:
             print(f"{path}/hyper_parameter.pkl not found!")
-            raise
+            raise IOError
     
     def edit(self):
         if confirm("Edit Hyper Parameters?"):

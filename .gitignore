@@ -8,5 +8,6 @@ event_files/
 Cards/
 __pycache__
 models/__pycache__
+hyper_parameter.pkl
 *.pyc
 *.pyo

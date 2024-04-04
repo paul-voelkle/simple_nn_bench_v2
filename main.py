@@ -110,12 +110,12 @@ def test_prompt(args:list[str]):
         show(["models", "trained"])
         print("Usage: test modelname test_set")
         return
-    elif args[0] in models.__models__:
-        test_model(args[0], args[1], config=config)
-        returning()
-    else:
-        print(f"{args[0]} is not a valid model")
-        show(["models", "available"])
+    #elif args[0] in models.__models__:
+    test_model(args[0], args[1], config=config)
+    returning()
+    #else:
+    #    print(f"{args[0]} is not a valid model")
+    #   show(["models", "available"])
 
 def preprocess_prompt(args:list[str]):
     if min_arg_error(args, 2):
