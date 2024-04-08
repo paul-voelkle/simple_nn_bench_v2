@@ -152,6 +152,8 @@ class TrainStats(DataIO):
         self.trn_losses:list[float] = []
         self.val_loss:float = 0.0
         self.val_losses:list[float] = []
+        self.val_acc:float = 0.0
+        self.val_accs:list[float] = []
         self.start_time:float = 0.0
         self.elapsed_time:float = 0.0
         self.trig:int = 0
@@ -177,8 +179,9 @@ class TrainStats(DataIO):
         print("current batch loss: {} [{}/{}]".format(self.trn_loss, self.batch_curr, self.batch_tot))
         
         separator()
-        print(f"Train Loss: {self.trn_loss}")
-        print(f"Validation Loss: {self.val_loss}")
+        print(f"Last train Loss: {self.trn_losses[-1]}")
+        print(f"Last validation Loss: {self.val_losses[-1]}")
+        print(f"Last validation Accuracy: {self.val_accs[-1]}")
         print(f"Trigger count: {self.trig}")
         print(f"Slope of last value losses: {self.val_slope}")
         self.getTimer()

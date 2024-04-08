@@ -57,6 +57,7 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
     TrainStats.name = model.name
     TrainStats.epochs = params.epochs
 
+    val_corr_arr = []
 
     #epochs_of_early_stopping = []
 
@@ -71,6 +72,12 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         TrainStats.val_loss, nls, kls = val_pass( val_dl, model, params.loss_fn )
         TrainStats.val_losses.append( TrainStats.val_loss )        
 
+        with torch.no_grad():
+            
+            val_pred = model(val_dl.dataset.imgs)
+        TrainStats.val_acc = (torch.round(val_pred[:,0])==val_dl.dataset.labels[:,0]).sum().item()/len(val_pred)
+        TrainStats.val_accs.append(TrainStats.val_acc)
+        
         #early stopping        
         if params.early_stopping and t > params.val_sample_length:
             TrainStats.val_slope = getSlope(np.array(TrainStats.val_losses), params.val_sample_length) 
@@ -80,11 +87,13 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         else:
             TrainStats.trig = 0
         
-        #plot losses every 15 epochs
+        #plot losses and accuracy every 15 epochs
         if t%15 == 0:
             TrainStats.stopTimer()
             plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["training losses", "validation losses"], title=model.name)
+            plot_2d(x=[TrainStats.val_accs], path='.', fname='last_training_accuracy.png', labels=["Accuracy on validation set"], title=model.name)
             TrainStats.resumeTimer()            
+        
         
         #update learning rate every 30 epochs
         if t%30 == 0:

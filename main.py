@@ -11,7 +11,6 @@ config = Settings()
 config.load()
 config.create_dirs()
 
-
 #some drawing utilities
 def start_up():
     clear()
@@ -23,7 +22,6 @@ def returning():
     print("Done, press enter to return to main menu")
     input()
     start_up()
-
 
 #show functions
 def show(args:list[str]=[]):
