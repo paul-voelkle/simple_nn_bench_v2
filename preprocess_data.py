@@ -7,8 +7,8 @@ from utilities import merge_arrays, split_array, confirm, Settings
 MAX_DATA_LENGTH = 50000
 
 NORM = True
-ROTATE = True
-FLIP = True
+ROTATE = False
+FLIP = False
 
 # Some initial settings
 __n_warning__ = 0.7

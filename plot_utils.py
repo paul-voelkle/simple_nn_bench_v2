@@ -10,15 +10,15 @@ import colorsys
 import numpy as np
 import os
 
-width=7
+width=6
 height=5
 font = "Times New Roman"
 font_familiy = "serif"
-font_size_text = 14
-font_size_label = 16
-font_size_title = 20
-font_size_tick = 10
-scale_factor = 2
+font_size_text = 16
+font_size_label = 18
+font_size_title = 22
+font_size_tick = 16
+scale_factor = 4
 figsize = (width*scale_factor, height*scale_factor)
 
 labelfont = FontProperties()

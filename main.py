@@ -4,6 +4,7 @@ from load_pd4ml_data import load
 from preprocess_data import preprocess_data, merge_data
 from training_network import train_network
 from test_networks import test_model
+from dataset_plots import create_plots
 from time import sleep
 from utilities import Settings, clear, separator, argument_handler, invalid_args_error, max_arg_error, min_arg_error, input_handler, command_handler
 
@@ -138,7 +139,13 @@ def merge_data_prompt(args:list[str]):
     returning()
     return
 
-
+def create_plots_prompt(args:list[str]):
+    if min_arg_error(args,2):
+        print("Usage: create_plots dataset names")
+        return
+    create_plots(args[0], args[1:], config)
+    returning()
+    return
 
 #main menu functions
 def main():
@@ -155,8 +162,8 @@ def main():
             
 def main_menu_input(input:str=""):
     command, args = input_handler(input)
-    commands = ["help", "show", "train", "test", "preprocess", "load", "merge"]
-    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt]
+    commands = ["help", "show", "train", "test", "preprocess", "load", "merge", "create_plots"]
+    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt, create_plots_prompt]
     if command == "":
         print("Type help for commands or exit to close program")
         return
