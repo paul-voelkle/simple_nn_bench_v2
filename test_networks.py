@@ -129,8 +129,8 @@ def test_model(path:str="", dataset:str="", config:Settings=None):
             labels=["AUC = {:.2f}".format(auc_score), 'Rnd classifier'], 
             X_label='$\epsilon_{bkg}$ - FPR', 
             Y_label='$\epsilon_{s}$ - TPR', 
-            xticks = TICKS,
-            yticks = TICKS,
+            #xticks = TICKS,
+            #yticks = TICKS,
             path=result_path,
             fname='roc_curve.png',
             linestyle=['solid', '--'])
@@ -148,7 +148,7 @@ def test_model(path:str="", dataset:str="", config:Settings=None):
             linestyle=['solid', '--'])
         
     #plot and save pred hist
-    hist(x=mean_pred,
+    hist(x=[mean_pred],
         title=f"{stats.name}: Histogramm of predicted values",
         X_label="Prediction",
         Y_label="Normailized",
@@ -158,8 +158,8 @@ def test_model(path:str="", dataset:str="", config:Settings=None):
         fname='pred_hist.png')
     
     #plot and save std hist
-    hist(x=std_pred,
-        title="{stats.name}: Histogramm of standard deviation",
+    hist(x=[std_pred],
+        title=f"{stats.name}: Histogramm of standard deviation",
         X_label="$\sigma_{\mathrm{pred}}$",
         Y_label="Normailized",
         bins=50,

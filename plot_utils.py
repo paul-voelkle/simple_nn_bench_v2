@@ -15,9 +15,9 @@ height=5
 font = "Times New Roman"
 font_familiy = "serif"
 font_size_text = 16
-font_size_label = 18
+font_size_label = 16
 font_size_title = 22
-font_size_tick = 16
+font_size_tick = 10
 scale_factor = 4
 figsize = (width*scale_factor, height*scale_factor)
 
@@ -45,6 +45,7 @@ axisfontsize = font_size_text*scale_factor
 labelfontsize = font_size_text*scale_factor
 
 plt.rcParams["font.family"] = font_familiy
+plt.rcParams["font.size"] = font_size_tick*scale_factor
 plt.rcParams["mathtext.default"] = "rm"
 plt.rcParams['text.usetex'] = True
 
@@ -68,6 +69,8 @@ def plot_helper(
     axs.set_xlabel( X_label, fontproperties=axislabelfont )
     axs.set_ylabel( Y_label, fontproperties=axislabelfont )
 
+    axs.ticklabel_format(axis="both", style="sci", scilimits=(0,0))
+
     axs.set_title(title, fontproperties=titlefont)
     
     axs.set_xscale( X_scale )
@@ -82,17 +85,18 @@ def plot_helper(
     
     axs.legend(labels=labels, loc='best', prop=tickfont )
     
+
     if len(xticks) != 0:
-        axs.set_xticklabels(xticks, fontproperties=tickfont)
-    else:
-        xticks = [ round(x_tick, 2) for x_tick in axs.get_xticks() ]
-        axs.set_xticklabels(xticks, fontproperties=tickfont)
+        axs.set_xticklabels(xticks)
+    # else:
+    #     xticks = [ round(x_tick, 2) for x_tick in axs.get_xticks() ]
+    #     axs.set_xticklabels(xticks, fontproperties=tickfont)
     
     if len(yticks) != 0:
-        axs.set_yticklabels(yticks, fontproperties=tickfont)
-    else:
-        yticks = [ round(y_tick, 2) for y_tick in axs.get_yticks()]
-        axs.set_yticklabels(yticks, fontproperties=tickfont)
+        axs.set_yticklabels(yticks)
+    # else:
+    #     yticks = [ round(y_tick, 2) for y_tick in axs.get_yticks()]
+    #     axs.set_yticklabels(yticks, fontproperties=tickfont)
 
     axs.legend(labels=labels, loc='best', prop=labelfont )
     
@@ -152,12 +156,17 @@ def hist(
         density:bool = False,
         path='',
         fname='', 
-        title:str="",
-        lables:list[str]=""
+        title:str=""
     ):
     fig, axs = plt.subplots(1, 1, figsize=figsize)
 
-    axs.hist(x, bins=bins, histtype=histtype, density=density) 
+    if len(x) > 1:
+        alpha = 1/len(x)
+    else:
+        alpha = 1.0
+        
+    for data in x:
+        axs.hist(x, bins=bins, alpha=alpha, histtype=histtype, density=density)     
     
     plot_helper(axs, fig, labels, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title)
     
