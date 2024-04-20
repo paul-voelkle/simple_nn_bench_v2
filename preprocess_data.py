@@ -249,6 +249,7 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         x_filepath = f"{file_path}/x_data.npy"
         y_filepath = f"{file_path}/y_data.npy"
         y_filepath_prep = f"{file_path}/y_data_prep.npy"
+        x_filepath_prep = f"{file_path}/x_data_prep.npy"
         z_filepath = f"{file_path}/z_data.npy"
         
         if not os.path.exists(file_path):
@@ -273,9 +274,9 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         if len(x) > MAX_DATA_LENGTH:
             xs = split_array(MAX_DATA_LENGTH, x)
             zs = []
-            for x in xs:
-                sortPT(x)
-                zs.append(constit_to_img(x, 50, NORM, ROTATE, FLIP).astype('float32'))
+            for x_split in xs:
+                sortPT(x_split)
+                zs.append(constit_to_img(x_split, 50, NORM, ROTATE, FLIP).astype('float32'))
 
             z = merge_arrays(zs)
         else:
@@ -291,6 +292,7 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=file_path, fname="Background")
         np.save(z_filepath,z)
         np.save(y_filepath_prep,y)
+        np.save(x_filepath_prep,x)
 
 def merge_data(src:str, out:str, shuffle:bool, config:Settings):
     

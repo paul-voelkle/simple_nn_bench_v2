@@ -16,7 +16,7 @@ config.create_dirs()
 def start_up():
     clear()
     separator()
-    print("Simple NN-Bench v0.0.4")
+    print("Simple NN-Bench v0.0.5")
     separator()
 
 def returning():

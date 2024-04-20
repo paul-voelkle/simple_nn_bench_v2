@@ -59,12 +59,12 @@ def create_plots(set:str, names:list[str], config:Settings):
         plot_path = f"{set_path}/plots"
         
         try: 
-            x = np.load(f"{set_path}/x_data.npy")
+            x = np.load(f"{set_path}/x_data_prep.npy")
         except IOError:
             print("Set does not exist!")
             return
         try: 
-            y = np.load(f"{set_path}/y_data.npy")
+            y = np.load(f"{set_path}/y_data_prep.npy")
         except IOError:
             print("Set does not exist!")
             return

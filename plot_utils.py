@@ -49,170 +49,221 @@ plt.rcParams["font.size"] = font_size_tick*scale_factor
 plt.rcParams["mathtext.default"] = "rm"
 plt.rcParams['text.usetex'] = True
 
-def plot_helper(
-        axs,
-        fig,
-        labels:list[str]="", 
-        X_label:str="", 
-        Y_label:str="", 
-        X_scale="linear", 
-        Y_scale="linear",
-        xticks=[],
-        yticks=[],         
-        path='',
-        fname='',
-        title:str="",
-        linestyle:list[str]=["solid"]
-        ):
-    #axs.set_linestyle(linestyle)
+def listify(x)->list:
+    if not isinstance(x, list):
+        return [x]  
 
+def create_plot(
+            axs,
+            fig,
+            X_label:str="", 
+            Y_label:str="", 
+            X_scale="linear", 
+            Y_scale="linear",
+            xticks=[],
+            yticks=[],         
+            path='',
+            fname='',
+            title:str="",
+            grid:bool=True
+):
+    #set axis labels, scale and tick format
     axs.set_xlabel( X_label, fontproperties=axislabelfont )
     axs.set_ylabel( Y_label, fontproperties=axislabelfont )
 
     axs.ticklabel_format(axis="both", style="sci", scilimits=(0,0))
-
-    axs.set_title(title, fontproperties=titlefont)
     
     axs.set_xscale( X_scale )
     axs.set_yscale( Y_scale )
 
-
-    #xticks = [ int(x) for x in axs.get_xticks() ]
-    #axs.set_xticklabels( xticks, fontproperties=tickfont )
-
-    #yticks = axs.get_yticks()
-    #axs.set_yticklabels( yticks, fontproperties=tickfont )
-    
-    axs.legend(labels=labels, loc='best', prop=tickfont )
-    
-
     if len(xticks) != 0:
         axs.set_xticklabels(xticks)
-    # else:
-    #     xticks = [ round(x_tick, 2) for x_tick in axs.get_xticks() ]
-    #     axs.set_xticklabels(xticks, fontproperties=tickfont)
-    
     if len(yticks) != 0:
-        axs.set_yticklabels(yticks)
-    # else:
-    #     yticks = [ round(y_tick, 2) for y_tick in axs.get_yticks()]
-    #     axs.set_yticklabels(yticks, fontproperties=tickfont)
-
-    axs.legend(labels=labels, loc='best', prop=labelfont )
-    
-    #axs.tick_params(labelsize=labelfontsize)
-    axs.grid('on')
-    
-    #fig.tight_layout()
+        axs.set_yticklabels(yticks)        
         
+    #set title
+    axs.set_title(title, fontproperties=titlefont, )
+    
+    #turn gird on
+    if grid:
+        axs.grid('on')
+    
+    #create legend
+    axs.legend(loc='best', prop=tickfont, framealpha=0.0 )
+    
+    #save plot
     if fname != '':
         print(f"Saving plot to {path}/{fname}")
         os.makedirs(path, exist_ok=True)
         plt.savefig(fname=f"{path}/{fname}")
-    
-    return fig, axs    
-    
 
 def plot_2d(
-        x:list[np.ndarray], 
-        y:list[np.ndarray]=[], 
-        labels:list[str]="", 
-        X_label:str="", 
-        Y_label:str="", 
-        X_scale="linear", 
-        Y_scale="linear",
-        xticks=[],
-        yticks=[],         
-        path='', 
-        fname='',
-        title:str="",
-        linestyle:list[str]=["solid"]):
+            x:list[np.ndarray], 
+            y:list[np.ndarray]=[], 
+            labels:list[str]="", 
+            X_label:str="", 
+            Y_label:str="", 
+            X_scale:str="linear", 
+            Y_scale:str="linear",
+            xticks:list[float]=[],
+            yticks:list[float]=[],         
+            path:str='', 
+            fname:str='',
+            title:str="",
+            linestyle:list[str]=["solid"],
+            grid:bool=True):
     
-    fig, axs = plt.subplots(1,1, figsize=figsize)
+    fig, axs = plt.figure(figsize=figsize), plt.axes()
     
-    if not len(y)==0 and len(x) == len(y):
-        for i in range(len(x)):
-            axs.plot(x[i], y[i])
-    else:
-        for X in x:
-            axs.plot(X) 
+    if not isinstance(x, list):
+        x = [x]
+        
+    if not isinstance(labels, list):
+        labels = [labels]
     
-    plot_helper(axs, fig, labels, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, linestyle)
+    if not isinstance(linestyle, list):
+        linestyle = [linestyle]    
     
-    return fig, axs
+    if len(linestyle) != len(x):
+        linestyle_old = linestyle
+        linestyle = [linestyle_old[0]]
+        for i in range(1,len(x)):
+            linestyle.append(linestyle_old[i%len(linestyle_old)])
+    
+    for i in range(len(x)): 
+        if len(x) == len(y):            
+            axs.plot(x[i], y[i], label=labels[i], linestyle=linestyle[i])
+        elif len(y)==1:
+            axs.plot(x[i], y[0], label=labels[i], linestyle=linestyle[i])
+        else:
+            axs.plot(x[i], label=labels[i]) 
+    
+    create_plot(axs, fig, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, grid)
 
 def hist(
-        x:list[np.ndarray], 
-        y:list[np.ndarray]=[], 
-        labels:list[str]="", 
-        X_label:str="", 
-        Y_label:str="", 
-        X_scale="linear", 
-        Y_scale="linear",
-        xticks=[],
-        yticks=[],
-        histtype="step", 
-        bins:int=0,
-        density:bool = False,
-        path='',
-        fname='', 
-        title:str=""
-    ):
-    fig, axs = plt.subplots(1, 1, figsize=figsize)
-
+            x:list[np.ndarray], 
+            labels:list[str]='', 
+            X_label:str='', 
+            Y_label:str='', 
+            X_scale:str='linear', 
+            Y_scale:str='linear',
+            xticks:list[float]=[],
+            yticks:list[float]=[],
+            histtype:list[str]=['step'], 
+            bins:int=0,
+            density:bool = False,
+            path:str='',
+            fname:str='', 
+            title:str='',
+            grid:bool=True):
+    
+    fig, axs = plt.figure(figsize=figsize), plt.axes()
+    
+    if not isinstance(x, list):
+        x = [x]
+    
+    if not isinstance(labels, list):
+        labels = [labels]    
+    
+    if not isinstance(histtype, list):
+        histtype = [histtype]    
+    
+    if len(histtype) != len(x):
+        histtype_old = histtype
+        histtype = [histtype_old[0]]
+        for i in range(1,len(x)):
+            histtype.append(histtype_old[i%len(histtype_old)])
+    
     if len(x) > 1:
         alpha = 1/len(x)
     else:
         alpha = 1.0
+    
+    for i in range(len(x)): 
+        axs.hist(x[i], bins=bins, alpha=alpha, histtype=histtype[i], density=density, label=labels[i])   
         
-    for data in x:
-        axs.hist(x, bins=bins, alpha=alpha, histtype=histtype, density=density)     
+    create_plot(axs, fig, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, grid)
     
-    plot_helper(axs, fig, labels, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title)
-    
-    return fig, axs
 
 def scatter(
-        x:list[np.ndarray], 
-        y:list[np.ndarray]=[], 
-        labels:list[str]="", 
-        X_label:str="", 
-        Y_label:str="", 
-        X_scale="linear", 
-        Y_scale="linear", 
-        xticks=[],
-        yticks=[],        
-        path='',
-        fname='',
-        title:str="",
-        linestyle:list[str]=''):
+            x:list[np.ndarray], 
+            y:list[np.ndarray], 
+            labels:list[str]="", 
+            X_label:str="", 
+            Y_label:str="", 
+            X_scale="linear", 
+            Y_scale="linear", 
+            xticks=[],
+            yticks=[],        
+            path='',
+            fname='',
+            title:str="",
+            linestyle:list[str]=['solid'],
+            grid:bool=True):
     
-    fig, axs = plt.subplots(1,1, figsize=figsize)
+    fig, axs = plt.figure(figsize=figsize), plt.axes()
     
-    axs.scatter(x,y)
+    if not isinstance(x, list):
+        x = [x]
+
+    if not isinstance(labels, list):
+        labels = [labels]
+        
+    if not isinstance(linestyle, list):
+        linestyle = [linestyle]
     
-    plot_helper(axs, fig, labels, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, linestyle)
+    if len(linestyle) != len(x):
+        linestyle_old = linestyle
+        linestyle = [linestyle_old[0]]
+        for i in range(1,len(x)):
+            linestyle.append(linestyle_old[i%len(linestyle_old)])
     
-    return fig, axs
+    for i in range(len(x)): 
+        if len(x) == len(y):            
+            axs.scatter(x[i], y[i], label=labels[i], linestyle=linestyle[i])
+        elif len(y)==1:
+            axs.scatter(x[i], y[0], label=labels[i], linestyle=linestyle[i])
+        else:
+            axs.scatter(x[i], label=labels[i]) 
+    
+    #axs.set_linestyle(linestyle)    
+    
+    create_plot(axs, fig, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, grid)
 
 def heatmap(
-        x:list[np.ndarray], 
-        labels:list[str]="", 
-        X_label:str="", 
-        Y_label:str="", 
-        X_scale="linear", 
-        Y_scale="linear", 
-        xticks=[],
-        yticks=[],        
-        path='',
-        fname='',
-        title:str="",
-        linestyle:list[str]=''
-):
-    fig, axs = plt.subplots(1,1, figsize=figsize)
+            x:list[np.ndarray], 
+            labels:list[str]="", 
+            X_label:str="", 
+            Y_label:str="", 
+            X_scale:str="linear", 
+            Y_scale:str="linear", 
+            xticks:list[float]=[],
+            yticks:list[float]=[],        
+            path:str='',
+            fname:str='',
+            title:str="",
+            cmap:list[str]=['gist_heat_r'],
+            grid:bool=True):
     
-    axs.imshow(x, cmap="gist_heat_r")
+    fig, axs = plt.figure(figsize=figsize), plt.axes()
+    
+    if not isinstance(x, list):
+        x = [x]
+    
+    if not isinstance(labels, list):
+        labels = [labels]    
+    
+    if not isinstance(cmap, list):
+        cmap = [cmap]    
+    
+    if len(cmap) != len(x):
+        cmap_old = cmap
+        cmap = [cmap_old[0]]
+        for i in range(1,len(x)):
+            cmap.append(cmap_old[i%len(cmap_old)])
+    
+    for i in range(len(x)): 
+        axs.imshow(x[i], label=labels[i], cmap=cmap[i]) 
+    
+    create_plot(axs, fig, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, grid)
 
-    plot_helper(axs, fig, labels, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, linestyle)
-    
-    return fig, axs
