@@ -9,45 +9,62 @@ import matplotlib.colors as mcolors
 import colorsys
 import numpy as np
 import os
+from utilities import DataIO
 
-width=6
-height=5
-font = "Times New Roman"
-font_familiy = "serif"
-font_size_text = 16
-font_size_label = 16
-font_size_title = 22
-font_size_tick = 10
-scale_factor = 4
-figsize = (width*scale_factor, height*scale_factor)
+class PlotSettings(DataIO):
+    def __init__(self):
+        super().__init__(filename="plot_config.pkl", path_default=".", name="Plotting Configuration")   
+        self.width=6
+        self.height=5
+        self.font = "Times New Roman"
+        self.font_familiy = "serif"
+        self.font_size_text = 16
+        self.font_size_label = 16
+        self.font_size_title = 22
+        self.font_size_tick = 10
+        self.scale_factor = 4
+        self.figsize = (self.width*self.scale_factor, self.height*self.scale_factor)
 
-labelfont = FontProperties()
-labelfont.set_family(font_familiy)
-labelfont.set_name(font)
-labelfont.set_size(font_size_text*scale_factor)
+        self.labelfont = FontProperties()
+        self.labelfont.set_family(self.font_familiy)
+        self.labelfont.set_name(self.font)
+        self.labelfont.set_size(self.font_size_text*self.scale_factor)
 
-axislabelfont = FontProperties()
-axislabelfont.set_family(font_familiy)
-axislabelfont.set_name(font)
-axislabelfont.set_size(font_size_label*scale_factor)
+        self.axislabelfont = FontProperties()
+        self.axislabelfont.set_family(self.font_familiy)
+        self.axislabelfont.set_name(self.font)
+        self.axislabelfont.set_size(self.font_size_label*self.scale_factor)
 
-titlefont = FontProperties()
-titlefont.set_family(font_familiy)
-titlefont.set_name(font)
-titlefont.set_size(font_size_title*scale_factor)
+        self.titlefont = FontProperties()
+        self.titlefont.set_family(self.font_familiy)
+        self.titlefont.set_name(self.font)
+        self.titlefont.set_size(self.font_size_title*self.scale_factor)
 
-tickfont = FontProperties()
-tickfont.set_family(font_familiy)
-tickfont.set_name(font)
-tickfont.set_size(font_size_tick*scale_factor)
+        self.tickfont = FontProperties()
+        self.tickfont.set_family(self.font_familiy)
+        self.tickfont.set_name(self.font)
+        self.tickfont.set_size(self.font_size_tick*self.scale_factor)
 
-axisfontsize = font_size_text*scale_factor
-labelfontsize = font_size_text*scale_factor
+        self.axisfontsize = self.font_size_text*self.scale_factor
+        self.labelfontsize = self.font_size_text*self.scale_factor
 
-plt.rcParams["font.family"] = font_familiy
-plt.rcParams["font.size"] = font_size_tick*scale_factor
-plt.rcParams["mathtext.default"] = "rm"
-plt.rcParams['text.usetex'] = True
+        plt.rcParams["font.family"] = self.font_familiy
+        plt.rcParams["font.size"] = self.font_size_tick*self.scale_factor
+        plt.rcParams["mathtext.default"] = "rm"
+        plt.rcParams['text.usetex'] = True
+        
+    def set_scale(self):
+        print(f"Setting scale to {self.scale_factor}")
+        self.figsize = (self.width*self.scale_factor, self.height*self.scale_factor)
+        self.labelfont.set_size(self.font_size_text*self.scale_factor)
+        self.axislabelfont.set_size(self.font_size_label*self.scale_factor)  
+        self.tickfont.set_size(self.font_size_tick*self.scale_factor)   
+        self.titlefont.set_size(self.font_size_title*self.scale_factor)   
+        self.axisfontsize = self.font_size_text*self.scale_factor
+        self.labelfontsize = self.font_size_text*self.scale_factor
+        plt.rcParams["font.size"] = self.font_size_tick*self.scale_factor
+
+plot_settings = PlotSettings()
 
 def listify(x)->list:
     if not isinstance(x, list):
@@ -68,8 +85,8 @@ def create_plot(
             grid:bool=True
 ):
     #set axis labels, scale and tick format
-    axs.set_xlabel( X_label, fontproperties=axislabelfont )
-    axs.set_ylabel( Y_label, fontproperties=axislabelfont )
+    axs.set_xlabel( X_label, fontproperties=plot_settings.axislabelfont )
+    axs.set_ylabel( Y_label, fontproperties=plot_settings.axislabelfont )
 
     axs.ticklabel_format(axis="both", style="sci", scilimits=(0,0))
     
@@ -82,14 +99,14 @@ def create_plot(
         axs.set_yticklabels(yticks)        
         
     #set title
-    axs.set_title(title, fontproperties=titlefont, )
+    axs.set_title(title, fontproperties=plot_settings.titlefont )
     
     #turn gird on
     if grid:
         axs.grid('on')
     
     #create legend
-    axs.legend(loc='best', prop=tickfont, framealpha=0.0 )
+    axs.legend(loc='best', prop=plot_settings.tickfont, framealpha=0.0 )
     
     #save plot
     if fname != '':
@@ -111,9 +128,13 @@ def plot_2d(
             fname:str='',
             title:str="",
             linestyle:list[str]=["solid"],
-            grid:bool=True):
+            grid:bool=True,
+            scale:float=4):
     
-    fig, axs = plt.figure(figsize=figsize), plt.axes()
+    plot_settings.scale_factor = scale
+    plot_settings.set_scale()
+    
+    fig, axs = plt.figure(figsize=plot_settings.figsize), plt.axes()
     
     if not isinstance(x, list):
         x = [x]
@@ -155,9 +176,13 @@ def hist(
             path:str='',
             fname:str='', 
             title:str='',
-            grid:bool=True):
+            grid:bool=True,
+            scale:float=4):
+
+    plot_settings.scale_factor = scale
+    plot_settings.set_scale()
     
-    fig, axs = plt.figure(figsize=figsize), plt.axes()
+    fig, axs = plt.figure(figsize=plot_settings.figsize), plt.axes()
     
     if not isinstance(x, list):
         x = [x]
@@ -199,13 +224,20 @@ def scatter(
             fname='',
             title:str="",
             linestyle:list[str]=['solid'],
-            grid:bool=True):
+            grid:bool=True,
+            scale:float=4):
+
+    plot_settings.scale_factor = scale
+    plot_settings.set_scale()
     
-    fig, axs = plt.figure(figsize=figsize), plt.axes()
+    fig, axs = plt.figure(figsize=plot_settings.figsize), plt.axes()
     
     if not isinstance(x, list):
         x = [x]
 
+    if not isinstance(y, list):
+        y = [y]
+        
     if not isinstance(labels, list):
         labels = [labels]
         
@@ -243,9 +275,13 @@ def heatmap(
             fname:str='',
             title:str="",
             cmap:list[str]=['gist_heat_r'],
-            grid:bool=True):
+            grid:bool=True,
+            scale:float = 4):
+
+    plot_settings.scale_factor = scale
+    plot_settings.set_scale()
     
-    fig, axs = plt.figure(figsize=figsize), plt.axes()
+    fig, axs = plt.figure(figsize=plot_settings.figsize), plt.axes()
     
     if not isinstance(x, list):
         x = [x]

@@ -64,7 +64,8 @@ def invalid_args_error(args:list[str]):
     print(f"{args} is/are not valid argument(s)")
 
 class DataIO():
-    def __init__(self, filename:str, path_default:str):
+    def __init__(self, filename:str, path_default:str, name:str):
+        self.name:str = name
         self.filename = filename
         self.path_default = path_default
         
@@ -86,12 +87,57 @@ class DataIO():
             raise
     
     def load_factory(self):
-        self.load(self.path_default)
+        try: 
+            self.load(self.path_default)
+        except:
+            print(f"Could not load {self.path_default}, keeping factory __init__")
+            self.save(self.path_default)
+            
+
+    def print_param(self):
+        row_length = 3
+        params = list(self.__dict__.keys())
+        headers = ["Name","Value"]
+        headers = headers*row_length
+        table = []
+        row = []
+        
+        for j in range(len(params)):
+            
+            if j%row_length == 0 and j != 0:
+                table.append(row)
+                row = []
+            
+            row.append(params[j])
+            row.append(getattr(self, params[j]))        
+        
+        if len(params)%row_length == 0 or len(params)<row_length:
+            table.append(row)       
+        
+        print(tabulate(table, headers=headers))
+
+    def edit(self):
+        if confirm(f"Edit {self.name}?"):
+            print("Editing parameters. To show parameters:Show, To exit type:done, Usage: parameterName parameterValue")
+            while True:
+                command, arg = input_handler(input())
+                if command == "done":
+                    self.print_param()
+                    break
+                elif command == "show":
+                    self.print_param()
+                else:
+                    try:
+                        print(f"Setting {command} to {arg[0]}")
+                        attr_type = type(getattr(self, command))
+                        setattr(self, command, cast(arg[0],attr_type))
+                    except:
+                        print(f"{command} is not a valid attribute")
 
 ##program settings
 class Settings(DataIO):
     def __init__(self):
-        super().__init__(filename="config.pkl", path_default=".")        
+        super().__init__(filename="config.pkl", path_default=".", name="Program Settings")        
         #paths for models and test results
         self.path_trained = "trained_models"
         self.path_results = "test_results"
@@ -145,7 +191,7 @@ class TrainStats(DataIO):
     stopTime = 0.0
     
     def __init__(self):
-        super().__init__(filename="stats.pkl", path_default=".")
+        super().__init__(filename="stats.pkl", path_default=".", name="Training Stats")
         self.epoch:int = 0
         self.epochs:int = 0
         self.trn_loss:float = 0.0
@@ -179,9 +225,10 @@ class TrainStats(DataIO):
         print("current batch loss: {} [{}/{}]".format(self.trn_loss, self.batch_curr, self.batch_tot))
         
         separator()
-        print(f"Last train Loss: {self.trn_losses[-1]}")
-        print(f"Last validation Loss: {self.val_losses[-1]}")
-        print(f"Last validation Accuracy: {self.val_accs[-1]}")
+        if self.epoch != 0:
+            print(f"Last train Loss: {self.trn_losses[-1]}")
+            print(f"Last validation Loss: {self.val_losses[-1]}")
+            print(f"Last validation Accuracy: {np.round(self.val_accs[-1],4)*100} %")
         print(f"Trigger count: {self.trig}")
         print(f"Slope of last value losses: {self.val_slope}")
         self.getTimer()
@@ -205,7 +252,7 @@ class TrainStats(DataIO):
 ##class for model training hyper parameters
 class HyperParams(DataIO):
     def __init__(self):
-        super().__init__(filename="hyper_parameter.pkl", path_default=".")
+        super().__init__(filename="hyper_parameter.pkl", path_default=".", name="Hyper Parameter")
         self.batch_size:int = 64
         self.epochs:int = 300
         self.loss_fn:nn.Module = nn.BCELoss()
@@ -218,31 +265,6 @@ class HyperParams(DataIO):
         self.training_size:int = 0
         self.device = "cuda:0" if cuda.is_available() else "cpu"
 
-    def print_param(self):
-        print(tabulate([["Optimizer","optimizer", self.optimizer, "Loss Function", "loss_fn", self.loss_fn],
-                        ["Batch Size", "batch_size ", self.batch_size, "Epochs","epochs", self.epochs],
-                        ["Learning Rate","lr", self.lr,"Early Stopping","early_stopping", self.early_stopping],
-                        ["Early Stopping Patience","patience", self.patience, "Max. Slope of val Losses", "max_val_slope", self.max_val_slope],
-                        ["Sample length for Slope", "val_sample_length", self.val_sample_length]]
-                       , headers=["Description","Name","Value", "Description", "Name","Value"]))
-
-    def edit(self):
-        if confirm("Edit Hyper Parameters?"):
-            print("Editing parameters. To show parameters:Show, To exit type:done, Usage: parameterName parameterValue")
-            while True:
-                command, arg = input_handler(input())
-                if command == "done":
-                    self.print_param()
-                    break
-                elif command == "show":
-                    self.print_param()
-                else:
-                    try:
-                        print(f"Setting {command} to {arg[0]}")
-                        attr_type = type(getattr(self, command))
-                        setattr(self, command, cast(arg[0],attr_type))
-                    except:
-                        print(f"{command} is not a valid attribute")
 
 
 ##functions for training and testing the models
