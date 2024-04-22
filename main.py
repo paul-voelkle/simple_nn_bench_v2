@@ -87,7 +87,31 @@ def show_config(args:list[str]):
     print("Program configuration:")
     config.print_param()
 
+#edit configuration functions
+def edit(args:list[str]):
+    if max_arg_error(args,1) or min_arg_error(args,1):
+        print("Usage: edit [config, hyperparams, plot_config]")
+    elif args[0] == "config":
+        edit_conf_prompt(args=list[str])
+    elif args[0] == "hyperparams":
+        edit_hyperparams_prompt()
+    elif args[0] == "plot_config":
+        edit_plot_conf_prompt()
+    else:
+        print(f"{args[0]} is not a valid argument!")
+        print("Usage: edit [config, hyperparams, plot_config]")        
+        
+def edit_conf_prompt(args:list[str]):
+    config.print_param()
+    config.edit()
+    returning()
+    return
 
+def edit_hyperparams_prompt():
+    ...
+
+def edit_plot_conf_prompt():
+    ...
 
 #program mode prompts
 def train_prompt(args:list[str]):
@@ -144,14 +168,6 @@ def create_plots_prompt(args:list[str]):
     returning()
     return
 
-def edit_conf_prompt(args:list[str]):
-    if max_arg_error(args, 0):
-        print("")
-        return
-    config.edit()
-    returning()
-    return
-
 #main menu functions
 def main():
     while True:
@@ -168,7 +184,7 @@ def main():
 def main_menu_input(input:str=""):
     command, args = input_handler(input)
     commands = ["help", "show", "train", "test", "preprocess", "load", "merge", "create_plots", "edit"]
-    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt, create_plots_prompt, edit_conf_prompt]
+    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt, create_plots_prompt, edit]
     if command == "":
         print("Type help for commands or exit to close program")
         return

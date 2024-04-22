@@ -12,14 +12,17 @@ import csv
 import io
 
 ##menu navigation and printing utils
-def confirm(text:str)->bool:
+def confirm(text:str, default:bool=False)->bool:
     while True:
-        print(f"{text} [yes/no]")
+        if default: print(f"{text} [yes/no] (default: yes)") 
+        else: print(f"{text} [yes/no] (default: no)")
         answer = input()
         if answer == "yes":
             return True
         elif answer == "no":
             return False
+        elif answer == "":
+            return default
 
 def input_handler(command:str=""):
     if command == "":
@@ -64,6 +67,8 @@ def invalid_args_error(args:list[str]):
     print(f"{args} is/are not valid argument(s)")
 
 class DataIO():
+    __noedit__ = ["__noedit__", "name", "filename", "path_default"]
+    
     def __init__(self, filename:str, path_default:str, name:str):
         self.name:str = name
         self.filename = filename
@@ -95,29 +100,30 @@ class DataIO():
             
 
     def print_param(self):
-        row_length = 3
+        row_length = 2
         params = list(self.__dict__.keys())
-        headers = ["Name","Value"]
+        headers = ["Name","Type","Value"]
         headers = headers*row_length
         table = []
         row = []
         
-        for j in range(len(params)):
-            
-            if j%row_length == 0 and j != 0:
+        for param in params:
+            if len(row)%len(headers) == 0 and len(row) != 0:
                 table.append(row)
                 row = []
             
-            row.append(params[j])
-            row.append(getattr(self, params[j]))        
+            if param not in self.__noedit__:
+                row.append(param)
+                row.append(type(getattr(self, param)))
+                row.append(getattr(self, param))        
         
-        if len(params)%row_length == 0 or len(params)<row_length:
+        if len(row) != 0:
             table.append(row)       
         
         print(tabulate(table, headers=headers))
 
     def edit(self):
-        if confirm(f"Edit {self.name}?"):
+        if confirm(f"Edit {self.name}?", True):
             print("Editing parameters. To show parameters:Show, To exit type:done, Usage: parameterName parameterValue")
             while True:
                 command, arg = input_handler(input())
@@ -126,13 +132,15 @@ class DataIO():
                     break
                 elif command == "show":
                     self.print_param()
-                else:
+                elif command not in self.__noedit__:
                     try:
                         print(f"Setting {command} to {arg[0]}")
                         attr_type = type(getattr(self, command))
                         setattr(self, command, cast(arg[0],attr_type))
                     except:
                         print(f"{command} is not a valid attribute")
+                else: 
+                    print(f"{command} is not a valid attribute")
 
 ##program settings
 class Settings(DataIO):
