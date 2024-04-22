@@ -54,7 +54,7 @@ class PlotSettings(DataIO):
         plt.rcParams['text.usetex'] = True
         
     def set_scale(self):
-        print(f"Setting scale to {self.scale_factor}")
+        # print(f"Setting scale to {self.scale_factor}")
         self.figsize = (self.width*self.scale_factor, self.height*self.scale_factor)
         self.labelfont.set_size(self.font_size_text*self.scale_factor)
         self.axislabelfont.set_size(self.font_size_label*self.scale_factor)  

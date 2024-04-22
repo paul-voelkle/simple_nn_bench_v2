@@ -6,11 +6,7 @@ from training_network import train_network
 from test_networks import test_model
 from dataset_plots import create_plots
 from time import sleep
-from utilities import Settings, clear, separator, argument_handler, invalid_args_error, max_arg_error, min_arg_error, input_handler, command_handler
-
-config = Settings()
-config.load()
-config.create_dirs()
+from utilities import config, clear, separator, argument_handler, invalid_args_error, max_arg_error, min_arg_error, input_handler, command_handler
 
 #some drawing utilities
 def start_up():
@@ -89,7 +85,8 @@ def show_help(args:list[str]):
 
 def show_config(args:list[str]):
     print("Program configuration:")
-    config.print()
+    config.print_param()
+
 
 
 #program mode prompts
@@ -98,7 +95,7 @@ def train_prompt(args:list[str]):
         print("Usage: train modelname dataset")
     elif args[0] in models.__models__:
         print(f"Start training {args[0]}")
-        train_network(model_name=args[0], dataset=args[1], config=config)
+        train_network(model_name=args[0], dataset=args[1])
         returning()
     else:
         print(f"{args[0]} is not a valid model!")
@@ -110,7 +107,7 @@ def test_prompt(args:list[str]):
         print("Usage: test modelname test_set")
         return
     #elif args[0] in models.__models__:
-    test_model(args[0], args[1], config=config)
+    test_model(args[0], args[1])
     returning()
     #else:
     #    print(f"{args[0]} is not a valid model")
@@ -120,7 +117,7 @@ def preprocess_prompt(args:list[str]):
     if min_arg_error(args, 2):
         print("Usage: preprocess src_folder set_names")
         return
-    preprocess_data(src_folder=args[0], files=args[1:], config=config)
+    preprocess_data(src_folder=args[0], files=args[1:])
     returning()
 
 def load_prompt(args:list[str]):
@@ -128,14 +125,14 @@ def load_prompt(args:list[str]):
         print("Require Number of events!")
         return
     else:
-        load(int(args[0]), config=config)
+        load(int(args[0]))
         returning()
 
 def merge_data_prompt(args:list[str]):
     if max_arg_error(args, 3) or min_arg_error(args, 3):
         print("Usage: merge src_data output shuffle[True/False]")
         return
-    merge_data(args[0], args[1], args[2]=='True', config=config)
+    merge_data(args[0], args[1], args[2]=='True')
     returning()
     return
 
@@ -143,7 +140,15 @@ def create_plots_prompt(args:list[str]):
     if min_arg_error(args,2):
         print("Usage: create_plots dataset names")
         return
-    create_plots(args[0], args[1:], config)
+    create_plots(args[0], args[1:])
+    returning()
+    return
+
+def edit_conf_prompt(args:list[str]):
+    if max_arg_error(args, 0):
+        print("")
+        return
+    config.edit()
     returning()
     return
 
@@ -162,8 +167,8 @@ def main():
             
 def main_menu_input(input:str=""):
     command, args = input_handler(input)
-    commands = ["help", "show", "train", "test", "preprocess", "load", "merge", "create_plots"]
-    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt, create_plots_prompt]
+    commands = ["help", "show", "train", "test", "preprocess", "load", "merge", "create_plots", "edit"]
+    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt, create_plots_prompt, edit_conf_prompt]
     if command == "":
         print("Type help for commands or exit to close program")
         return

@@ -1,6 +1,6 @@
 import os
 from plot_utils import hist, heatmap
-from utilities import Settings
+from utilities import config
 import numpy as np
 
 # Calculate the pseudorapidity of pixel entries
@@ -51,7 +51,7 @@ def get_pT_jet(x):
     py_sum = x[:,:,2].sum(axis=1)
     return np.sqrt(px_sum**2+py_sum**2)
 
-def create_plots(set:str, names:list[str], config:Settings):
+def create_plots(set:str, names:list[str]):
     print("Creating Plots:")
     
     for name in names:
@@ -82,7 +82,7 @@ def create_plots(set:str, names:list[str], config:Settings):
         bkg_z = z[np.where(y[:,0] == 0)]
         
         label_list = ['E', 'p_x', 'p_y', 'p_z']
-        X_label_list = ['Energy $E$ in [GeV]', 'Impuls $p_x$ in [GeV/c]', 'Impuls $p_y$ in [GeV/c]', 'Impuls $p_z$ in [GeV/c]']        
+        X_label_list = ['$E$ [GeV]', '$p_x$ [GeV/c]', '$p_y$ [GeV/c]', '$p_z$ [GeV/c]']        
         legend = ['Signal', 'Hintergrund']
         histtype = "barstacked"
         
@@ -90,13 +90,14 @@ def create_plots(set:str, names:list[str], config:Settings):
         rand_bkg =  np.random.randint(0, len(bkg_z)) 
         
         for i in range(0,4):
-            hist(x=[sig[:,:,i].ravel(), bkg[:,:,i].ravel()], labels=legend, Y_label="Number of events $N$", X_label=X_label_list[i], Y_scale="log", title=f"${label_list[i]}$", path=plot_path, fname=f"sign_{label_list[i]}", bins=100, histtype=histtype)
+            hist(x=[sig[:,:,i].ravel(), bkg[:,:,i].ravel()], labels=legend, Y_label="Number of events $N$", X_label=X_label_list[i], Y_scale="log", path=plot_path, fname=f"sign_{label_list[i]}", bins=100, histtype=histtype)
         
-        hist(x=[get_pT(sig).ravel(), get_pT(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$p_T$ in [GeV/c]", Y_scale="log", title="$p_T$", path=plot_path, fname=f"sign_pT", bins=100, histtype=histtype)
-        hist(x=[eta(sig).ravel(), eta(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\eta$", Y_scale="log", title="$\eta$", path=plot_path, fname=f"sign_eta", bins=100, histtype=histtype)
-        hist(x=[phi(sig).ravel(), phi(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\phi$ in [Rad]", Y_scale="log", title="$\phi$", path=plot_path, fname=f"sign_phi", bins=100, histtype=histtype)
-        hist(x=[get_pT_jet(sig).ravel(), get_pT_jet(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$p_T$ in [GeV/c]", Y_scale="log", title="$p_{T,Jet}$", path=plot_path, fname=f"sign_pT_jet", bins=100, histtype=histtype)
-        hist(x=[eta_jet(sig).ravel(), eta_jet(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\eta$", Y_scale="log", title="$\eta_{Jet}$ ", path=plot_path, fname=f"sign_eta_jet", bins=100, histtype=histtype)
+        hist(x=[get_pT(sig).ravel(), get_pT(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$p_T$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT", bins=100, histtype=histtype)
+        hist(x=[eta(sig).ravel(), eta(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\eta$", Y_scale="log", path=plot_path, fname=f"sign_eta", bins=100, histtype=histtype)
+        hist(x=[phi(sig).ravel(), phi(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\phi$ [Rad]", Y_scale="log", path=plot_path, fname=f"sign_phi", bins=100, histtype=histtype)
+        hist(x=[get_pT_jet(sig).ravel(), get_pT_jet(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$p_{T,\text{Jet}}$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT_jet", bins=100, histtype=histtype)
+        hist(x=[eta_jet(sig).ravel(), eta_jet(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\eta{\text{Jet}}$", Y_scale="log", path=plot_path, fname=f"sign_eta_jet", bins=100, histtype=histtype)
+        
         heatmap(sig_z.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Gemitteltes Signal mit {len(sig_z)} Jets", path=plot_path, fname="signal_mean")
         heatmap(bkg_z.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Gemittelter Hintergrund mit {len(bkg_z)} Jets", path=plot_path, fname="background_mean")
         rand_sig = np.random.randint(0, len(sig_z)) 

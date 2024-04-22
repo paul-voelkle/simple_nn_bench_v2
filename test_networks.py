@@ -1,4 +1,4 @@
-from utilities import HyperParams, TrainStats,  Settings, load_dataset, load_model, clear, separator, confirm, store_results, init_device, val_pass
+from utilities import HyperParams, TrainStats,  config, load_dataset, load_model, clear, separator, confirm, store_results, init_device, val_pass
 from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np 
 import torch
@@ -48,10 +48,7 @@ def closest_point(array, tpr_p=0.3):
     return np.argmin(dist)
 
 
-def test_model(path:str="", dataset:str="", config:Settings=None):
-    
-    if config == None:
-        return
+def test_model(path:str="", dataset:str=""):
     
     result_path = f"{config.path_results}/{path}"
 
@@ -93,7 +90,7 @@ def test_model(path:str="", dataset:str="", config:Settings=None):
     params.edit()
 
     #load test datat set
-    test_dl = load_dataset(name=test_set, params=params, config=config)
+    test_dl = load_dataset(name=test_set, params=params)
 
     #evaluate models accuracy on test dataset
     test_pred, test_loss, test_corr_perc = eval_net(model, test_dl, params.loss_fn)

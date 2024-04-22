@@ -2,13 +2,7 @@ import sys
 import numpy as np
 from plot_utils import heatmap
 import os
-from utilities import merge_arrays, split_array, confirm, Settings
-
-MAX_DATA_LENGTH = 50000
-
-NORM = True
-ROTATE = True
-FLIP = True
+from utilities import merge_arrays, split_array, confirm, config
 
 # Some initial settings
 __n_warning__ = 0.7
@@ -228,11 +222,8 @@ def sortPT(arr:np.ndarray):
     for i in range(len(arr)):
         arr[i] = sortEventsPt(arr[i])
 
-def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None):
-    
-    if config == None:
-        return
-    
+def preprocess_data(src_folder:str="", files:list[str]=[]):
+        
     if len(files) == 0:
         print("Error: No filenames provided!")
         return
@@ -271,16 +262,16 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
                 y = y[0:size,:]        
         
         #split x array for preprocessing:
-        if len(x) > MAX_DATA_LENGTH:
-            xs = split_array(MAX_DATA_LENGTH, x)
+        if len(x) > config.prep_max_data:
+            xs = split_array(config.prep_max_data, x)
             zs = []
             for x_split in xs:
-                sortPT(x_split)
-                zs.append(constit_to_img(x_split, 50, NORM, ROTATE, FLIP).astype('float32'))
+                #sortPT(x_split)
+                zs.append(constit_to_img(x_split, 50, config.prep_norm, config.prep_rot, config.prep_flip).astype('float32'))
 
             z = merge_arrays(zs)
         else:
-            z = constit_to_img(x, 50, NORM, ROTATE, FLIP).astype('float32')
+            z = constit_to_img(x, 50, config.prep_norm, config.prep_rot, config.prep_flip).astype('float32')
         
         sig = z[np.where( y[:,0] == 1)]
         bkg = z[np.where( y[:,0] == 0)]
@@ -294,10 +285,7 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         np.save(y_filepath_prep,y)
         np.save(x_filepath_prep,x)
 
-def merge_data(src:str, out:str, shuffle:bool, config:Settings):
-    
-    if config == None:
-        return    
+def merge_data(src:str, out:str, shuffle:bool):
     
     print(f"Merging data {config.path_notmerged}/{src}")
     

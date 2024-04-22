@@ -4,9 +4,9 @@ from plot_utils import plot_2d
 import numpy as np
 import torch
 from sklearn.linear_model import LinearRegression
-from utilities import TrainStats, HyperParams, Settings, val_pass, confirm, load_dataset, separator, init_model
+from utilities import TrainStats, HyperParams, config, val_pass, confirm, load_dataset, separator, init_model
 
-def train_epoch( dataloader, model, loss_fn, optimizer, TrainStats:TrainStats):
+def train_epoch(dataloader, model, loss_fn, optimizer, TrainStats:TrainStats):
     
     size = len( dataloader.dataset )
     TrainStats.batch_tot = size
@@ -59,6 +59,8 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
 
     val_corr_arr = []
 
+    val_length_updated = False
+    
     #epochs_of_early_stopping = []
 
     for t in range(params.epochs):
@@ -101,6 +103,11 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
             for g in params.optimizer.param_groups:
                 g['lr'] = params.lr                 
         
+        #update val sample length
+        if int(TrainStats.trig/2) >= params.patience and not val_length_updated:
+            params.val_sample_length = int(t/2)
+            val_length_updated = True
+        
         if TrainStats.trig >= params.patience:
             TrainStats.stopTimer()
             plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["training losses", "validation losses"], title=model.name,  scale=1)
@@ -119,7 +126,7 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
     plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["Training losses", "Validation losses"], title=[model.name])
     return 
 
-def save_model(model:models, TrainStats:TrainStats, params:HyperParams, config:Settings):
+def save_model(model:models, TrainStats:TrainStats, params:HyperParams):
     
     PATH = f"{config.path_trained}/{model.name}"
 
@@ -140,9 +147,7 @@ def save_model(model:models, TrainStats:TrainStats, params:HyperParams, config:S
         print("Model not saved.")
 
 
-def train_network(model_name:str, dataset:str, config:Settings):
-    if config == None:
-        return
+def train_network(model_name:str, dataset:str):
     
     train_set = f"{dataset}/train"
     val_set = f"{dataset}/val"
@@ -163,12 +168,12 @@ def train_network(model_name:str, dataset:str, config:Settings):
     params.save(".")
     
     try:
-        train_dl = load_dataset(name=train_set, params=params, trainSetBool=True, config=config)
+        train_dl = load_dataset(name=train_set, params=params, trainSetBool=True)
     except:
         return
 
     try:
-        val_dl = load_dataset(name=val_set, params=params, config=config)
+        val_dl = load_dataset(name=val_set, params=params)
     except:
         return
     
@@ -180,6 +185,6 @@ def train_network(model_name:str, dataset:str, config:Settings):
     
     params.optimizer = torch.optim.Adam(params=model.parameters(), lr=params.lr)
     train_loop(model=model, params=params, train_dl=train_dl, val_dl=val_dl, TrainStats=stats)
-    save_model(model=model, TrainStats=stats, params=params, config=config)
+    save_model(model=model, TrainStats=stats, params=params)
     return
 

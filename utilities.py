@@ -122,7 +122,7 @@ class DataIO():
             while True:
                 command, arg = input_handler(input())
                 if command == "done":
-                    self.print_param()
+                    self.save()
                     break
                 elif command == "show":
                     self.print_param()
@@ -148,6 +148,12 @@ class Settings(DataIO):
         self.path_notmerged = f"{self.path_data}/not_merged"
         self.path_merged = f"{self.path_data}/merged"
 
+        #preprocessing configuration
+        self.prep_norm:bool = True
+        self.prep_flip:bool = True
+        self.prep_rot:bool = True
+        self.prep_max_data:int = 50000
+
     def save(self):   
         with open("config.pkl",'wb') as file:
             print("Saving config to ./config.pkl")
@@ -167,11 +173,6 @@ class Settings(DataIO):
         for atr in self.__dict__.keys():
             if atr.startswith("path_"):
                 os.makedirs(self.__getattribute__(atr), exist_ok=True)
-    
-    def print(self):
-        for atr in self.__dict__.keys():
-            if atr.startswith("path_"):
-                print(atr, self.__getattribute__(atr))
     
     def load_factory(self):
         self.__init__()
@@ -366,7 +367,12 @@ def cast(input, in_type:type):
     elif in_type == float:
         return float(input)
     elif in_type == bool:
-        return bool(input)
+        if input == 'True':
+            return True
+        elif input == 'False':
+            return False
+        else:
+            raise TypeError("Input must be True or False")
     else:
         return input
 
@@ -393,3 +399,9 @@ def merge_arrays(arrays:list[np.ndarray])->np.ndarray:
         array = np.concatenate((array,arrays[i]), axis=0)
 
     return array
+
+
+#create and load programm configuration
+config = Settings()
+config.load()
+config.create_dirs()
