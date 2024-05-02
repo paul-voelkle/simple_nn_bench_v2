@@ -76,25 +76,26 @@ class DataIO():
         
     def save(self, path:str):
         os.makedirs(path, exist_ok=True)
-        print(f"Saving to {path}/{self.filename}.pkl")
+        print(f"Saving to {path}/{self.filename}")
         with open(f"{path}/{self.filename}",'wb') as file:
             pickle.dump(self,file)
 
-    def load(self, path:str):        
+    def load(self, path:str):     
+        print(f"Loading {path}/{self.filename}")   
         try:
             with open(f"{path}/{self.filename}", 'rb') as file:
                 if cuda.is_available():
                     return pickle.load(file)
                 else:
                     return CPU_Unpickler(file).load()
-        except:
+        except IOError:
             print(f"{path}/{self.filename} not found!")
             raise
     
     def load_factory(self):
         try: 
             self.load(self.path_default)
-        except:
+        except IOError:
             print(f"Could not load {self.path_default}, keeping factory __init__")
             self.save(self.path_default)
             
@@ -128,7 +129,7 @@ class DataIO():
             while True:
                 command, arg = input_handler(input())
                 if command == "done":
-                    self.save()
+                    self.save(self.path_default)
                     break
                 elif command == "show":
                     self.print_param()
@@ -275,14 +276,13 @@ class HyperParams(DataIO):
         self.device = "cuda:0" if cuda.is_available() else "cpu"
 
 
-
 ##functions for training and testing the models
 def init_device():
     device = "cuda:0" if cuda.is_available() else "cpu"
     print(f"Using {device} device")
     return device
 
-def val_pass( dataloader, model, loss_fn ):
+def val_pass( dataloader, model, loss_fn, test_mode:bool = "False"):
     
     size = len( dataloader.dataset )
     num_batches = len( dataloader )
@@ -292,7 +292,7 @@ def val_pass( dataloader, model, loss_fn ):
 
     # we don't need gradients here since we only use the forward pass
     with torch.no_grad():
-        for X, y in dataloader:
+        for batch, (X, y) in enumerate(dataloader):
             if model.name == "BayesConvNet2D":
                 pred = model( X )
                 nl = loss_fn(pred, y)
@@ -304,29 +304,28 @@ def val_pass( dataloader, model, loss_fn ):
             else:
                 pred = model( X )
                 vls += loss_fn( pred, y ).item()
-
+            if test_mode and batch % 50 == 0:
+                print(f"Current batch: {batch}")
     nls /= num_batches
     kls /= num_batches
     vls /= num_batches
     return vls, nls, kls
 
-def load_dataset(name:str="", trainSetBool:bool=False, params:HyperParams=HyperParams(), config:Settings=None)->DataLoader:
-    
-    if config==None:
-        return
-    
+def load_dataset(name:str="", trainSetBool:bool=False, params:HyperParams=HyperParams())->DataLoader:
+        
     path = config.path_merged
     
     try:
         z = torch.Tensor(np.load(f"{path}/{name}/z_data.npy").reshape(-1, 1, 40,40).astype('float32')).to(params.device)
     except:
-        raise
+        print(f"{path}/{name}/z_data.npy does not exist! Return to main menu")
+        raise IOError
     
     try:
         y = torch.Tensor(np.load(f"{path}/{name}/y_data_prep.npy")).to(params.device)
     except:
-        print(f"{path}/{name}/y_data.npy does not exist! Return to main menu")
-        raise
+        print(f"{path}/{name}/y_data_prep.npy does not exist! Return to main menu")
+        raise IOError
 
     if trainSetBool:
         params.training_size = np.load(f"{path}/{name}/y_data_prep.npy").shape[0]

@@ -82,7 +82,7 @@ def preprocessing( x ,y, weights, rotate=True, flip=True ):
 
     # Check if shifting worked, there can be problems with modulo variables like phi (y)
     # x and y are sorted after highest weight, 0-comp. gives hottest event
-    # for Jet-like Images Centroid should be close to hottest constituen (pT-sorted arrays)  
+    # for Jet-like Images Centroid should be close to hottest constituent (pT-sorted arrays)  
     global n_shift_phi
     global n_shift_eta
     if np.abs(x[0]) > __n_warning__:
@@ -261,7 +261,7 @@ def preprocess_data(src_folder:str="", files:list[str]=[]):
                 x = x[0:size,:,:]
                 y = y[0:size,:]        
         
-        #split x array for preprocessing:
+        #split array x for preprocessing:
         if len(x) > config.prep_max_data:
             xs = split_array(config.prep_max_data, x)
             zs = []
@@ -273,14 +273,14 @@ def preprocess_data(src_folder:str="", files:list[str]=[]):
         else:
             z = constit_to_img(x, 50, config.prep_norm, config.prep_rot, config.prep_flip).astype('float32')
         
-        sig = z[np.where( y[:,0] == 1)]
-        bkg = z[np.where( y[:,0] == 0)]
+        #sig = z[np.where( y[:,0] == 1)]
+        #bkg = z[np.where( y[:,0] == 0)]
 
         print(n_shift_eta, n_shift_phi)
         
         print(f"Done! Saving file to {file_path}")
-        heatmap(sig.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Signal with {len(sig)} Jets", path=file_path, fname="Signal")
-        heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=file_path, fname="Background")
+        #heatmap(sig.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Signal with {len(sig)} Jets", path=file_path, fname="Signal")
+        #heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=file_path, fname="Background")
         np.save(z_filepath,z)
         np.save(y_filepath_prep,y)
         np.save(x_filepath_prep,x)

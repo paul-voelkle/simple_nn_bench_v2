@@ -8,7 +8,7 @@ event_files/
 Cards/
 __pycache__
 models/__pycache__
-hyper_parameter.pkl
+*.pkl
 last_training_accuracy.png
 *.pyc
 *.pyo

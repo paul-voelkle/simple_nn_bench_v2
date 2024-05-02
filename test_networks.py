@@ -25,38 +25,42 @@ def get_prediction(dataloader:DataLoader, model, params:HyperParams,  n_monte=30
     return mean, std
 
 def eval_net(model, dataloader:DataLoader, loss_fn):
-    test_loss = val_pass(dataloader, model, loss_fn)
+    print("Calculating loss on test set...")
+    test_loss = val_pass(dataloader, model, loss_fn, test_mode=True)
     
+
+    print("Tagging test set...")
     with torch.no_grad():
         test_pred = model(dataloader.dataset.imgs)
     
+    print("Compairing predictions with labels...")
     test_corr = (torch.round(test_pred[:,0])==dataloader.dataset.labels[:,0]).sum().item()
 
-    test_corr_prec = test_corr*100/len(test_pred)
+    test_corr_perc = test_corr*100/len(test_pred)
     
     separator()
     print(f"Performance evaluation of {model.name}:")
     print("MSE-loss on test dataset: {}".format(test_loss))
-    print("Accuracy on test dataset: {:.1f} %".format(test_corr_prec))
+    print("Accuracy on test dataset: {:.1f} %".format(test_corr_perc))
     separator()
     print()
     
-    return test_pred, test_loss, test_corr_prec
+    return test_pred, test_loss, test_corr_perc
 
 def closest_point(array, tpr_p=0.3):
     dist = ((array-tpr_p)**2)
     return np.argmin(dist)
 
 
-def test_model(path:str="", dataset:str=""):
+def test_model(model:str="", dataset:str=""):
     
-    result_path = f"{config.path_results}/{path}"
+    result_path = f"{config.path_results}/{model}"
 
     test_set = f"{dataset}/test"
     
     clear()
     separator()
-    print(f"Testing model: {path}")
+    print(f"Testing model: {model}")
     separator()
     
     if os.path.exists(result_path):
@@ -68,7 +72,7 @@ def test_model(path:str="", dataset:str=""):
     os.makedirs(result_path, exist_ok=True)
 
     #load saved model, training stats and hyperparam
-    model_path = f"{config.path_trained}/{path}"
+    model_path = f"{config.path_trained}/{model}"
     params = HyperParams().load(model_path)
     stats = TrainStats().load(model_path)
     params.device = init_device()
@@ -82,16 +86,17 @@ def test_model(path:str="", dataset:str=""):
         STATS_DATASET = False
     
     #show hyperparamter edit promt
-    separator()
-    print("Current Hyper Parameters:")
-    separator()
-    params.print_param()
-    separator()
-    params.edit()
+    # separator()
+    # print("Current Hyper Parameters:")
+    # separator()
+    # params.print_param()
+    # separator()
+    # params.edit()
 
     #load test datat set
     test_dl = load_dataset(name=test_set, params=params)
-
+    #print(test_dl)
+    
     #evaluate models accuracy on test dataset
     test_pred, test_loss, test_corr_perc = eval_net(model, test_dl, params.loss_fn)
 

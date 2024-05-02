@@ -7,6 +7,8 @@ from test_networks import test_model
 from dataset_plots import create_plots
 from time import sleep
 from utilities import config, clear, separator, argument_handler, invalid_args_error, max_arg_error, min_arg_error, input_handler, command_handler
+from plot_utils import plot_settings
+
 
 #some drawing utilities
 def start_up():
@@ -111,7 +113,10 @@ def edit_hyperparams_prompt():
     ...
 
 def edit_plot_conf_prompt():
-    ...
+    plot_settings.print_param()
+    plot_settings.edit()
+    returning()
+    return
 
 #program mode prompts
 def train_prompt(args:list[str]):
