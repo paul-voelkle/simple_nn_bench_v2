@@ -90,25 +90,34 @@ def create_plots(set:str, names:list[str]):
         rand_bkg =  np.random.randint(0, len(bkg_z)) 
         
         for i in range(0,4):
-            hist(x=[sig[:,:,i].ravel(), bkg[:,:,i].ravel()], labels=legend, Y_label="Number of events $N$", X_label=X_label_list[i], Y_scale="log", path=plot_path, fname=f"sign_{label_list[i]}", bins=100, histtype=histtype)
+            hist(x=[sig[:,:,i].ravel(), bkg[:,:,i].ravel()], labels=legend, Y_label="Number of constituents $N$", X_label=X_label_list[i], Y_scale="log", path=plot_path, fname=f"sign_{label_list[i]}", bins=100, histtype=histtype)
         
-        hist(x=[get_pT(sig).ravel(), get_pT(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$p_T$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT", bins=100, histtype=histtype)
-        hist(x=[eta(sig).ravel(), eta(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\eta$", Y_scale="log", path=plot_path, fname=f"sign_eta", bins=100, histtype=histtype)
-        hist(x=[phi(sig).ravel(), phi(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\phi$ [Rad]", Y_scale="log", path=plot_path, fname=f"sign_phi", bins=100, histtype=histtype)
-        hist(x=[get_pT_jet(sig).ravel(), get_pT_jet(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$p_{T,\text{Jet}}$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT_jet", bins=100, histtype=histtype)
-        hist(x=[eta_jet(sig).ravel(), eta_jet(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\eta{\text{Jet}}$", Y_scale="log", path=plot_path, fname=f"sign_eta_jet", bins=100, histtype=histtype)
+        hist(x=[get_pT(sig).ravel(), get_pT(bkg).ravel()], labels=legend, Y_label="Number of constituents $N$", X_label="$p_T$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT", bins=100, histtype=histtype)
+        hist(x=[eta(sig).ravel(), eta(bkg).ravel()], labels=legend, Y_label="Number of constituents $N$", X_label="$\eta$", Y_scale="log", path=plot_path, fname=f"sign_eta", bins=100, histtype=histtype)
+        hist(x=[phi(sig).ravel(), phi(bkg).ravel()], labels=legend, Y_label="Number of constituents $N$", X_label="$\phi$ [Rad]", Y_scale="log", path=plot_path, fname=f"sign_phi", bins=100, histtype=histtype)
+        hist(x=[get_pT_jet(sig).ravel(), get_pT_jet(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$p_{T,J} }$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT_jet", bins=100, histtype=histtype)
+        hist(x=[eta_jet(sig).ravel(), eta_jet(bkg).ravel()], labels=legend, Y_label="Number of events $N$", X_label="$\eta_J }$", Y_scale="log", path=plot_path, fname=f"sign_eta_jet", bins=100, histtype=histtype)
         
-        heatmap(sig_z.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Gemitteltes Signal mit {len(sig_z)} Jets", path=plot_path, fname="signal_mean")
-        heatmap(bkg_z.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Gemittelter Hintergrund mit {len(bkg_z)} Jets", path=plot_path, fname="background_mean")
+        # num_xticks = 10
+        # x_start = -2.6
+        # x_stop = 2.6
+        # x_step = abs(x_start-x_stop)/num_xticks
+
+        xpixels = np.array(["-2.6","","","","0","","","","2.6"])
+        ypixels = np.array(["-$\pi$","","","","0","","","","$\pi$"])
+
+        heatmap(sig_z.mean(0).reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$", Y_label="$\Delta \phi$", title=f"Gemitteltes Signal mit {len(sig_z)} Jets", path=plot_path, fname="signal_mean")
+        heatmap(bkg_z.mean(0).reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$", Y_label="$\Delta \phi$", title=f"Gemittelter Hintergrund mit {len(bkg_z)} Jets", path=plot_path, fname="background_mean")
+        
         rand_sig = np.random.randint(0, len(sig_z)) 
         rand_bkg =  np.random.randint(0, len(bkg_z))        
-        heatmap(sig_z[rand_sig].reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Einzelner Signal Jet", path=plot_path, fname="signal_single_1")
-        heatmap(bkg_z[rand_bkg].reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Einzelner Background Jet", path=plot_path, fname="background_single_1")
+        heatmap(sig_z[rand_sig].reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$", Y_label="$\Delta \phi$", path=plot_path, fname="signal_single_1")
+        heatmap(bkg_z[rand_bkg].reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$", Y_label="$\Delta \phi$", path=plot_path, fname="background_single_1")
         rand_sig = np.random.randint(0, len(sig_z)) 
         rand_bkg =  np.random.randint(0, len(bkg_z))
-        heatmap(sig_z[rand_sig].reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Einzelner Signal Jet", path=plot_path, fname="signal_single_2")
-        heatmap(bkg_z[rand_bkg].reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Einzelner Background Jet", path=plot_path, fname="background_single_2")
+        heatmap(sig_z[rand_sig].reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$", Y_label="$\Delta \phi$", path=plot_path, fname="signal_single_2")
+        heatmap(bkg_z[rand_bkg].reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$", Y_label="$\Delta \phi$", path=plot_path, fname="background_single_2")
         rand_sig = np.random.randint(0, len(sig_z)) 
         rand_bkg =  np.random.randint(0, len(bkg_z))        
-        heatmap(sig_z[rand_sig].reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Einzelner Signal Jet", path=plot_path, fname="signal_single_3")
-        heatmap(bkg_z[rand_bkg].reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Einzelner Background Jet", path=plot_path, fname="background_single_3")
+        heatmap(sig_z[rand_sig].reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$", Y_label="$\Delta \phi$", path=plot_path, fname="signal_single_3")
+        heatmap(bkg_z[rand_bkg].reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$", Y_label="$\Delta \phi$", path=plot_path, fname="background_single_3")
