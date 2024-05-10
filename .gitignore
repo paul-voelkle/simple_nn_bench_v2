@@ -12,3 +12,4 @@ models/__pycache__
 last_training_accuracy.png
 *.pyc
 *.pyo
+*.png
