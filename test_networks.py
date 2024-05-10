@@ -1,4 +1,4 @@
-from utilities import HyperParams, TrainStats,  config, load_dataset, load_model, clear, separator, confirm, store_results, init_device, val_pass
+from utilities import HyperParams, TrainStats, TestResults, config, load_dataset, load_model, clear, separator, confirm, store_results, init_device, val_pass
 from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np 
 import torch
@@ -16,7 +16,8 @@ def get_prediction(dataloader:DataLoader, model, params:HyperParams,  n_monte=30
     pred = []
     for i in range(n_monte):
         print(f"Computing Monte Carlo sample {i+1} / {n_monte}")
-        pred.append(model(x)[:,0].detach().unsqueeze(1))
+        with torch.no_grad():
+            pred.append(model(x)[:,0].detach().unsqueeze(1))
         
     pred = torch.stack(pred)
     mean = torch.mean(pred, axis=0)
@@ -28,10 +29,12 @@ def eval_net(model, dataloader:DataLoader, loss_fn):
     print("Calculating loss on test set...")
     test_loss = val_pass(dataloader, model, loss_fn, test_mode=True)
     
+    #test_loss = 0.0
 
     print("Tagging test set...")
     with torch.no_grad():
         test_pred = model(dataloader.dataset.imgs)
+    
     
     print("Compairing predictions with labels...")
     test_corr = (torch.round(test_pred[:,0])==dataloader.dataset.labels[:,0]).sum().item()
@@ -58,6 +61,9 @@ def test_model(model:str="", dataset:str=""):
 
     test_set = f"{dataset}/test"
     
+    results = TestResults()
+    results.path_default = result_path
+
     clear()
     separator()
     print(f"Testing model: {model}")
@@ -119,16 +125,17 @@ def test_model(model:str="", dataset:str=""):
             title=f'{stats.name}: training and validation losses')
         
     #plot and save roc and auc score
-    fpr, tpr, th = roc_curve(test_dl.dataset.labels[:,0].long().cpu(), test_pred[:,0].cpu())
-    auc_score = roc_auc_score(test_dl.dataset.labels[:,0].long().cpu(), test_pred[:,0].cpu())
-    rnd_class = np.linspace(0, 1, 100)
+    results.fpr, results.tpr, th = roc_curve(test_dl.dataset.labels[:,0].long().cpu(), test_pred[:,0].cpu())
+    results.auc_score = roc_auc_score(test_dl.dataset.labels[:,0].long().cpu(), test_pred[:,0].cpu())
     
-        
+    results.save(results.path_default)
+    store_results(params, stats, test_loss, test_corr_perc, results.auc_score, result_path)
+    
     #plot and save roc curve
-    plot_2d(x=[fpr, rnd_class],
-            y=[tpr, rnd_class], 
+    plot_2d(x=[results.fpr, results.rnd_class],
+            y=[results.tpr, results.rnd_class], 
             title=f'{stats.name}: ROC-Curve', 
-            labels=["AUC = {:.2f}".format(auc_score), 'Rnd classifier'], 
+            labels=["AUC = {:.2f}".format(results.auc_score), 'Rnd classifier'], 
             X_label='$\epsilon_{bkg}$ - FPR', 
             Y_label='$\epsilon_{s}$ - TPR', 
             #xticks = TICKS,
@@ -138,11 +145,11 @@ def test_model(model:str="", dataset:str=""):
             linestyle=['solid', '--'])
     
     #plot and save roc curve with inverse FPR
-    plot_2d(x=[tpr, rnd_class],
-            y=[1/fpr, 1/rnd_class], 
+    plot_2d(x=[results.tpr, results.rnd_class],
+            y=[1/results.fpr, 1/results.rnd_class], 
             title=f'{stats.name}: ROC-Curve - Inverse FPR', 
-            labels=['AUC = {:.2f}\n $1/\epsilon_{{bkg}}$(0.3) = {:.0f}'.format(auc_score, 1/fpr[closest_point(tpr, tpr_p=0.3)]), 'Rnd classifier'], 
-            X_label='$\epsilon_{bkg}$ - FPR', 
+            labels=['AUC = {:.2f}\n $1/\epsilon_{{bkg}}$(0.3) = {:.0f}'.format(results.auc_score, 1/results.fpr[closest_point(results.tpr, tpr_p=0.3)]), 'Rnd classifier'], 
+            X_label='$1 / \epsilon_{bkg}$ - FPR', 
             Y_label='$\epsilon_{s}$ - TPR',
             Y_scale='log',
             path=result_path,
@@ -167,8 +174,7 @@ def test_model(model:str="", dataset:str=""):
         bins=50,
         histtype="step",
         path=result_path,
-        fname='std_hist.png',
-        density=True)  
+        fname='std_hist.png')  
 
     #scatter mean and std  
     scatter(x=mean_pred,
@@ -178,6 +184,5 @@ def test_model(model:str="", dataset:str=""):
             title=f"{stats.name}: Scatter Plot",
             path=result_path,
             fname='scatter.png')
-    
-    store_results(params, stats, test_loss, test_corr_perc, auc_score, result_path)
+
 

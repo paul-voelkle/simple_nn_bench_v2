@@ -89,7 +89,7 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         else:
             TrainStats.trig = 0
         
-        #plot losses and accuracy every 15 epochs
+        #plot losses and accuracy every 5 epochs
         if t%5 == 0:
             TrainStats.stopTimer()
             plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["training losses", "validation losses"], title=model.name, scale=1)
@@ -98,8 +98,8 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         
         
         #update learning rate every 30 epochs
-        if t%30 == 0:
-            params.lr = params.lr/2
+        if params.lr_decr and t%params.lr_interv == 0:
+            params.lr = params.lr*params.lr_decr_fact
             for g in params.optimizer.param_groups:
                 g['lr'] = params.lr                 
         

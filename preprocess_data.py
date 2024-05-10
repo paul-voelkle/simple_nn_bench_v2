@@ -168,11 +168,14 @@ def constit_to_img( jets:np.ndarray, n_constit:int, norm:bool, rotate:bool, flip
     pz_tot = pzs.sum(axis=1)
     j_mass = mass(E_tot, px_tot, py_tot, pz_tot)
     
+    global n_preshift_phi
+
     print( "Pre-shifting the phis" )
     phis = (phis.T - phis[:,0]).T
     phis[phis < -np.pi] += 2*np.pi
     phis[phis > np.pi] -= 2*np.pi
     
+
     print( "Using pT as weight" )
     weights = pT
     
