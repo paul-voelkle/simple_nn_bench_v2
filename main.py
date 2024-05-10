@@ -8,13 +8,13 @@ from dataset_plots import create_plots
 from time import sleep
 from utilities import config, clear, separator, argument_handler, invalid_args_error, max_arg_error, min_arg_error, input_handler, command_handler
 from plot_utils import plot_settings
-
+from result_plots import plot_result
 
 #some drawing utilities
 def start_up():
     clear()
     separator()
-    print("Simple NN-Bench v0.0.5")
+    print("Simple NN-Bench v0.0.6")
     separator()
 
 def returning():
@@ -173,12 +173,20 @@ def create_plots_prompt(args:list[str]):
     returning()
     return
 
+def create_results_prompt(args:list[str]):
+    if min_arg_error(args, 1):
+        print("Usage: create_results names")
+        return
+    plot_result(args)
+    returning()
+    return
+
 #main menu functions
 def main():
     while True:
         user_input = input()
         if user_input == "exit":
-            config.save()
+            config.save(config.path_default)
             print("Bye!")
             sleep(1)
             clear()
@@ -188,8 +196,8 @@ def main():
             
 def main_menu_input(input:str=""):
     command, args = input_handler(input)
-    commands = ["help", "show", "train", "test", "preprocess", "load", "merge", "create_plots", "edit"]
-    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt, create_plots_prompt, edit]
+    commands = ["help", "show", "train", "test", "preprocess", "load", "merge", "create_plots", "edit", "create_results"]
+    functions = [show_help, show, train_prompt, test_prompt, preprocess_prompt, load_prompt, merge_data_prompt, create_plots_prompt, edit, create_results_prompt]
     if command == "":
         print("Type help for commands or exit to close program")
         return
