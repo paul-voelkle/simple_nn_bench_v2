@@ -1,4 +1,5 @@
 import os
+from typing import TypeVar
 from tabulate import tabulate
 from print_data_utils import *
 from torch.utils.data import DataLoader
@@ -11,15 +12,20 @@ import math
 import csv
 import io
 
+T = TypeVar('T', bound='DataIO')
+
 ##menu navigation and printing utils
-def confirm(text:str)->bool:
+def confirm(text:str, default:bool=False)->bool:
     while True:
-        print(f"{text} [yes/no]")
+        if default: print(f"{text} [yes/no] (default: yes)") 
+        else: print(f"{text} [yes/no] (default: no)")
         answer = input()
         if answer == "yes":
             return True
         elif answer == "no":
             return False
+        elif answer == "":
+            return default
 
 def input_handler(command:str=""):
     if command == "":
@@ -63,49 +69,142 @@ def min_arg_error(args: list[str], min_args:int)->bool:
 def invalid_args_error(args:list[str]):
     print(f"{args} is/are not valid argument(s)")
 
-##programm settings
-class Settings():
+
+
+class DataIO():    
+    def __init__(self, filename:str, path_default:str, name:str, ver:str):
+        self.name:str = name
+        self.filename = filename
+        self.path_default = path_default
+        self.__noedit__ = ["__noedit__", "name", "filename", "path_default", "ver"]
+        self.ver = ver
+        
+    def save(self, path:str):
+        os.makedirs(path, exist_ok=True)
+        print(f"Saving to {path}/{self.filename}")
+        with open(f"{path}/{self.filename}",'wb') as file:
+            pickle.dump(self,file)
+
+    def load(self, path:str="")->T:     
+        
+        if path == "":
+            path = self.path_default
+        
+        print(f"Loading {path}/{self.filename}")   
+        try:
+            with open(f"{path}/{self.filename}", 'rb') as file:
+                if cuda.is_available():
+                    return self.updater(pickle.load(file))
+                else:
+                    return self.updater(CPU_Unpickler(file).load())
+        except IOError:
+            print(f"{path}/{self.filename} not found!")
+            return self
     
-    def __init__(self):        
+    def updater(self, file):
+        try:
+            ver = file.ver
+        except:
+            ver = "None"
+
+        if self.ver != ver:
+            print(f"Loaded file is an older version! Updating file...")
+            old_params = list(file.__dict__.keys())
+            
+            for param in old_params:
+                if param != "ver" or "__noedit__":
+                    #print(f"Setting {param} = {getattr(file, param)}")
+                    setattr(self,param, getattr(file, param)) 
+            
+            return self
+        else:
+            return file
+
+    def print_param(self):
+        row_length = 2
+        params = list(self.__dict__.keys())
+        headers = ["Name","Type","Value"]
+        headers = headers*row_length
+        table = []
+        row = []
+        
+        for param in params:
+            if len(row)%len(headers) == 0 and len(row) != 0:
+                table.append(row)
+                row = []
+            
+            if param not in self.__noedit__:
+                row.append(param)
+                row.append(type(getattr(self, param)))
+                row.append(getattr(self, param))        
+        
+        if len(row) != 0:
+            table.append(row)       
+        
+        print(tabulate(table, headers=headers))
+
+    def edit(self):
+        if confirm(f"Edit {self.name}?", True):
+            print("Editing parameters. To show parameters:Show, To exit type:done, Usage: parameterName parameterValue")
+            while True:
+                command, arg = input_handler(input())
+                if command == "done":
+                    self.save(self.path_default)
+                    break
+                elif command == "show":
+                    self.print_param()
+                elif command not in self.__noedit__:
+                    try:
+                        print(f"Setting {command} to {arg[0]}")
+                        attr_type = type(getattr(self, command))
+                        setattr(self, command, cast(arg[0],attr_type))
+                    except:
+                        print(f"{command} is not a valid attribute")
+                else: 
+                    print(f"{command} is not a valid attribute")
+
+##program settings
+class Settings(DataIO):
+    
+    def __init__(self):
+        super().__init__(filename="config.pkl", path_default=".", name="Program Settings", ver="0.0.1")        
         #paths for models and test results
         self.path_trained = "trained_models"
         self.path_results = "test_results"
         self.path_models = "models"
-        self.path_trained_models = "trained_models"
         
         #paths for datasets
         self.path_data = "data"
         self.path_notmerged = f"{self.path_data}/not_merged"
         self.path_merged = f"{self.path_data}/merged"
 
-    def save(self):   
-        with open("config.pkl",'wb') as file:
-            print("Saving config to ./config.pkl")
-            pickle.dump(self,file)
+        #preprocessing configuration
+        self.prep_norm:bool = True
+        self.prep_flip:bool = True
+        self.prep_rot:bool = True
+        self.prep_max_data:int = 50000
     
-    def load(self):
-        try:
-            with open("config.pkl", 'rb') as file:
-                print("Loading config.pkl")
-                return pickle.load(file)
-        except IOError:
-            print("No config file found. Initialize factory settings")
-            self.load_factory()
-            return
+    def load(self)->'Settings':
+        return super().load(self.path_default)
+
+    # def load(self):
+    #     try:
+    #         with open("config.pkl", 'rb') as file:
+    #             print("Loading config.pkl")
+    #             return pickle.load(file)
+    #     except IOError:
+    #         print("No config file found. Initialize factory settings")
+    #         self.load_factory()
+    #         return
 
     def create_dirs(self):
         for atr in self.__dict__.keys():
             if atr.startswith("path_"):
                 os.makedirs(self.__getattribute__(atr), exist_ok=True)
     
-    def print(self):
-        for atr in self.__dict__.keys():
-            if atr.startswith("path_"):
-                print(atr, self.__getattribute__(atr))
-    
-    def load_factory(self):
-        self.__init__()
-        self.save()
+    # def load_factory(self):
+    #     self.__init__()
+    #     self.save()
         
 ## cpu unpickler
 class CPU_Unpickler(pickle.Unpickler):
@@ -116,43 +215,30 @@ class CPU_Unpickler(pickle.Unpickler):
             return super().find_class(module, name)
 
 ##class to track model training statistics
-class TrainStats():
+class TrainStats(DataIO):
     
-    stopTime = 0.0
+    stopTime = 0.0    
     
-    def __init__(self, 
-                epoch:int = 0, 
-                epochs:int = 0, 
-                trn_loss:float = 0, 
-                val_loss:float = 0, 
-                trn_losses:list[float] = [],
-                val_losses:list[float] = [],
-                elapsed_time:float = 0, 
-                trig:int = 0, 
-                val_slope:float = -1, 
-                batch_curr:int = 0, 
-                batch_tot:int = 0,
-                name:str = "",
-                dataset:list[str] = [],
-                device:str = "",
-                early_stopping:bool = False):
-        
-        self.epoch = epoch
-        self.epochs = epochs
-        self.trn_loss = trn_loss
-        self.trn_losses = trn_losses
-        self.val_loss = val_loss
-        self.val_losses = val_losses
-        self.start_time = 0.0
-        self.elapsed_time = elapsed_time
-        self.trig = trig
-        self.val_slope = val_slope
-        self.batch_curr = batch_curr
-        self.batch_tot = batch_tot
-        self.name = name
-        self.device = device
-        self.early_stopping = early_stopping
-        self.dataset = dataset
+    def __init__(self):
+        super().__init__(filename="stats.pkl", path_default=".", name="Training Stats", ver="0.0.1")
+        self.epoch:int = 0
+        self.epochs:int = 0
+        self.trn_loss:float = 0.0
+        self.trn_losses:list[float] = []
+        self.val_loss:float = 0.0
+        self.val_losses:list[float] = []
+        self.val_acc:float = 0.0
+        self.val_accs:list[float] = []
+        self.start_time:float = 0.0
+        self.elapsed_time:float = 0.0
+        self.trig:int = 0
+        self.val_slope:float = -1.0
+        self.batch_curr:int = 0
+        self.batch_tot:int = 0
+        self.name:str = ""
+        self.device:str = ""
+        self.early_stopping:bool = True
+        self.dataset:list[str] = []
         self.startTimer()
     
     def update(self):
@@ -168,10 +254,12 @@ class TrainStats():
         print("current batch loss: {} [{}/{}]".format(self.trn_loss, self.batch_curr, self.batch_tot))
         
         separator()
-        print(f"Train Loss: {self.trn_loss}")
-        print(f"Validation Loss: {self.val_loss}")
+        if self.epoch != 0:
+            print(f"Last train Loss: {self.trn_losses[-1]}")
+            print(f"Last validation Loss: {self.val_losses[-1]}")
+            print(f"Last validation Accuracy: {np.round(self.val_accs[-1],4)*100} %")
         print(f"Trigger count: {self.trig}")
-        print(f"Slope of last 10 value losses: {self.val_slope}")
+        print(f"Slope of last value losses: {self.val_slope}")
         self.getTimer()
         m, s = formatTime(self.elapsed_time)
         print(f"Elapsed Time: {m} min {s} s")
@@ -180,26 +268,6 @@ class TrainStats():
     def startTimer(self):
         self.start_time = time.time()
     
-    def save(self, path):
-        
-        os.makedirs(path, exist_ok=True)
-        print(f"Saving Training Stats to {path}/hyper_parameter.pkl")
-        with open(f"{path}/stats.pkl",'wb') as file:
-            pickle.dump(self,file)
-    
-
-    def load(path):
-        
-        try:
-            with open(f"{path}/stats.pkl", 'rb') as file:
-                if cuda.is_available():
-                    return pickle.load(file)
-                else:
-                    return CPU_Unpickler(file).load()
-        except:
-            print(f"{path}/stats.pkl not found!")
-            raise
-
     def getTimer(self):
         self.elapsed_time = round(time.time() - self.start_time,3)
         
@@ -211,84 +279,46 @@ class TrainStats():
 
 
 ##class for model training hyper parameters
-class HyperParams():
-    def __init__(self,
-                 batch_size:int = 64,
-                 epochs:int = 300,
-                 loss_fn:nn.Module = nn.BCELoss(),
-                 patience:int = 10,
-                 val_slope_sample_length:int = 10,
-                 max_val_loss_slope:float = -1e-06,
-                 lr:float = 5e-4,
-                 optimizer:torch.optim = None,
-                 early_stopping:bool = True,
-                 training_size:int = 0):
-        self.batch_size = batch_size
-        self.epochs = epochs
-        self.loss_fn = loss_fn
-        self.patience = patience
-        self.max_val_slope = max_val_loss_slope
-        self.val_sample_length = val_slope_sample_length
-        self.lr = lr
-        self.optimizer = optimizer
-        self.device = init_device() 
-        self.early_stopping = early_stopping
-        self.training_size = training_size
-
-    def print_param(self):
-        print(tabulate([["Optimizer","optimizer", self.optimizer, "Loss Function", "loss_fn", self.loss_fn],
-                        ["Batch Size", "batch_size ", self.batch_size, "Epochs","epochs", self.epochs],
-                        ["Learning Rate","lr", self.lr,"Early Stopping","early_stopping", self.early_stopping],
-                        ["Early Stopping Patience","patience", self.patience, "Max. Slope of val Losses", "max_val_slope", self.max_val_slope],
-                        ["Sample length for Slope", "val_sample_length", self.val_sample_length]]
-                       , headers=["Description","Name","Value", "Description", "Name","Value"]))
-
-    def save(self, path):
-        
-        os.makedirs(path, exist_ok=True)
-        print(f"Saving Hyper Parameter to {path}/hyper_parameter.pkl")
-        with open(f"{path}/hyper_parameter.pkl",'wb') as file:
-            pickle.dump(self,file)
+class HyperParams(DataIO):
     
+    def __init__(self):
+        super().__init__(filename="hyper_parameter.pkl", path_default=".", name="Hyper Parameter", ver="0.0.3")
+        self.batch_size:int = 64
+        self.epochs:int = 300
+        self.loss_fn:nn.Module = nn.BCELoss()
+        self.patience:int = 10
+        self.max_val_slope:float = -1e-06
+        self.val_sample_length:int = 10
+        self.lr:float = 5e-5
+        self.lr_decr:bool = False
+        self.lr_interv:int = 30
+        self.lr_decr_fact:float = 0.5
+        self.optimizer:torch.optim = None
+        self.early_stopping:bool = True
+        self.training_size:int = 0
+        self.device = "cuda:0" if cuda.is_available() else "cpu"
+        self.__noedit__ = self.__noedit__ + ["optimizer"]
 
-    def load(path):
-        try:
-            with open(f"{path}/hyper_parameter.pkl", 'rb') as file:
-                if cuda.is_available():
-                    return pickle.load(file)
-                else:
-                    return CPU_Unpickler(file).load()
-        except:
-            print(f"{path}/hyper_parameter.pkl not found!")
-            raise
+
+class TestResults(DataIO):
     
-    def edit(self):
-        if confirm("Edit Hyper Parmeters?"):
-            print("Editing parameters. To show parameters:Show, To exit type:done, Usage: parameterName parameterValue")
-            while True:
-                command, arg = input_handler(input())
-                if command == "done":
-                    self.print_param()
-                    break
-                elif command == "show":
-                    self.print_param()
-                else:
-                    try:
-                        print(f"Setting {command} to {arg[0]}")
-                        attr_type = type(getattr(self, command))
-                        setattr(self, command, cast(arg[0],attr_type))
-                    except:
-                        print(f"{command} is not a valid attribute")
+    def __init__(self):
+        super().__init__(filename="results.pkl", path_default=".", name="test results", ver="0.0.1")
+        self.fpr = []
+        self.tpr = []
+        self.auc_score = []
+        self.rnd_res = 400
+        self.rnd_class = np.linspace(0,1,self.rnd_res)
+
 
 
 ##functions for training and testing the models
-
 def init_device():
     device = "cuda:0" if cuda.is_available() else "cpu"
     print(f"Using {device} device")
     return device
 
-def val_pass( dataloader, model, loss_fn ):
+def val_pass( dataloader, model, loss_fn, test_mode:bool = False):
     
     size = len( dataloader.dataset )
     num_batches = len( dataloader )
@@ -298,7 +328,7 @@ def val_pass( dataloader, model, loss_fn ):
 
     # we don't need gradients here since we only use the forward pass
     with torch.no_grad():
-        for X, y in dataloader:
+        for batch, (X, y) in enumerate(dataloader):
             if model.name == "BayesConvNet2D":
                 pred = model( X )
                 nl = loss_fn(pred, y)
@@ -310,41 +340,34 @@ def val_pass( dataloader, model, loss_fn ):
             else:
                 pred = model( X )
                 vls += loss_fn( pred, y ).item()
-
+            if test_mode and batch % 50 == 0:
+                print(f"Current batch: {batch}")
     nls /= num_batches
     kls /= num_batches
     vls /= num_batches
     return vls, nls, kls
 
-def load_dataset(name:str="", path:str="data/merged", trainSetBool:bool=False, params:HyperParams=HyperParams())->DataLoader:
+def load_dataset(name:str="", trainSetBool:bool=False, params:HyperParams=HyperParams())->DataLoader:
+        
+    path = config.path_merged
     
     try:
         z = torch.Tensor(np.load(f"{path}/{name}/z_data.npy").reshape(-1, 1, 40,40).astype('float32')).to(params.device)
     except:
-        raise
+        print(f"{path}/{name}/z_data.npy does not exist! Return to main menu")
+        raise IOError
     
     try:
-        y = torch.Tensor(np.load(f"{path}/{name}/y_data.npy")).to(params.device)
+        y = torch.Tensor(np.load(f"{path}/{name}/y_data_prep.npy")).to(params.device)
     except:
-        print(f"{path}/{name}/y_data.npy does not exist! Return to main menu")
-        raise
+        print(f"{path}/{name}/y_data_prep.npy does not exist! Return to main menu")
+        raise IOError
 
     if trainSetBool:
-        params.training_size = np.load(f"{path}/{name}/y_data.npy").shape[0]
+        params.training_size = np.load(f"{path}/{name}/y_data_prep.npy").shape[0]
 
     dataset = models.dataset.dataset(z,y)    
     return DataLoader(dataset=dataset, batch_size=params.batch_size, shuffle=True)
-
-def init_hyperparams():
-    params = HyperParams()
-    separator()
-    print("Current Hyper Parameters:")
-    separator()
-    params.print_param()
-    separator()
-    params.edit()
-            
-    return params
 
 def init_model(name:str, params:HyperParams):
     print(f"Initializing {name}")
@@ -387,7 +410,12 @@ def cast(input, in_type:type):
     elif in_type == float:
         return float(input)
     elif in_type == bool:
-        return bool(input)
+        if input == 'True':
+            return True
+        elif input == 'False':
+            return False
+        else:
+            raise TypeError("Input must be True or False")
     else:
         return input
 
@@ -414,3 +442,8 @@ def merge_arrays(arrays:list[np.ndarray])->np.ndarray:
         array = np.concatenate((array,arrays[i]), axis=0)
 
     return array
+
+
+#create and load program configuration
+config = Settings().load()
+config.create_dirs()

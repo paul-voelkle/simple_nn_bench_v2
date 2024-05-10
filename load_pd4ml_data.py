@@ -1,12 +1,9 @@
 import os
 from pd4ml import TopTagging
 import numpy as np
-from utilities import Settings
+from utilities import config
 
-def load(number_of_events:int=10000, config:Settings = None):
-    
-    if Settings == None:
-        return
+def load(number_of_events:int=10000):
     
     PATH = f"{config.path_merged}/TopTagging"
     

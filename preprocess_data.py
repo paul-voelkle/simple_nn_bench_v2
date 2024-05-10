@@ -2,13 +2,7 @@ import sys
 import numpy as np
 from plot_utils import heatmap
 import os
-from utilities import merge_arrays, split_array, confirm, command_handler, Settings
-
-MAX_DATA_LENGTH = 50000
-
-NORM = True
-ROTATE = True
-FLIP = True
+from utilities import merge_arrays, split_array, confirm, config
 
 # Some initial settings
 __n_warning__ = 0.7
@@ -88,7 +82,7 @@ def preprocessing( x ,y, weights, rotate=True, flip=True ):
 
     # Check if shifting worked, there can be problems with modulo variables like phi (y)
     # x and y are sorted after highest weight, 0-comp. gives hottest event
-    # for Jet-like Images Centroid should be close to hottest constituen (pT-sorted arrays)  
+    # for Jet-like Images Centroid should be close to hottest constituent (pT-sorted arrays)  
     global n_shift_phi
     global n_shift_eta
     if np.abs(x[0]) > __n_warning__:
@@ -174,11 +168,14 @@ def constit_to_img( jets:np.ndarray, n_constit:int, norm:bool, rotate:bool, flip
     pz_tot = pzs.sum(axis=1)
     j_mass = mass(E_tot, px_tot, py_tot, pz_tot)
     
+    global n_preshift_phi
+
     print( "Pre-shifting the phis" )
     phis = (phis.T - phis[:,0]).T
     phis[phis < -np.pi] += 2*np.pi
     phis[phis > np.pi] -= 2*np.pi
     
+
     print( "Using pT as weight" )
     weights = pT
     
@@ -228,11 +225,8 @@ def sortPT(arr:np.ndarray):
     for i in range(len(arr)):
         arr[i] = sortEventsPt(arr[i])
 
-def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None):
-    
-    if config == None:
-        return
-    
+def preprocess_data(src_folder:str="", files:list[str]=[]):
+        
     if len(files) == 0:
         print("Error: No filenames provided!")
         return
@@ -248,6 +242,8 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         file_path = f"{config.path_merged}/{src_folder}/{name}"
         x_filepath = f"{file_path}/x_data.npy"
         y_filepath = f"{file_path}/y_data.npy"
+        y_filepath_prep = f"{file_path}/y_data_prep.npy"
+        x_filepath_prep = f"{file_path}/x_data_prep.npy"
         z_filepath = f"{file_path}/z_data.npy"
         
         if not os.path.exists(file_path):
@@ -256,37 +252,43 @@ def preprocess_data(src_folder:str="", files:list[str]=[], config:Settings=None)
         x = np.load(x_filepath)
         y = np.load(y_filepath)
         x, y = remove_zero_pT(x, y)
-        
+                
         if pTCut:
             x, y = pT_cut(x, y, float(ptMin), float(ptMax))
         
-        #split x array for preprocessing:
-        if len(x) > MAX_DATA_LENGTH:
-            xs = split_array(MAX_DATA_LENGTH, x)
+        if confirm(f"Limit size of {file_path}"):
+            print("Enter size:")
+            size = int(input())
+            if size < len(x):
+                print(f"Limiting size to {size}")
+                x = x[0:size,:,:]
+                y = y[0:size,:]        
+        
+        #split array x for preprocessing:
+        if len(x) > config.prep_max_data:
+            xs = split_array(config.prep_max_data, x)
             zs = []
-            for x in xs:
-                sortPT(x)
-                zs.append(constit_to_img(x, 50, NORM, ROTATE, FLIP).astype('float32'))
+            for x_split in xs:
+                #sortPT(x_split)
+                zs.append(constit_to_img(x_split, 50, config.prep_norm, config.prep_rot, config.prep_flip).astype('float32'))
 
             z = merge_arrays(zs)
         else:
-            z = constit_to_img(x, 50, NORM, ROTATE, FLIP).astype('float32')
+            z = constit_to_img(x, 50, config.prep_norm, config.prep_rot, config.prep_flip).astype('float32')
         
-        sig = z[np.where( y[:,0] == 1)]
-        bkg = z[np.where( y[:,0] == 0)]
+        #sig = z[np.where( y[:,0] == 1)]
+        #bkg = z[np.where( y[:,0] == 0)]
 
         print(n_shift_eta, n_shift_phi)
         
         print(f"Done! Saving file to {file_path}")
-        heatmap(sig.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Signal with {len(sig)} Jets", path=file_path, fname="Signal")
-        heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=file_path, fname="Background")
+        #heatmap(sig.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Signal with {len(sig)} Jets", path=file_path, fname="Signal")
+        #heatmap(bkg.mean(0).reshape((40,40)),X_label="$\eta$", Y_label="$\phi$", title=f"Background with {len(bkg)} Jets", path=file_path, fname="Background")
         np.save(z_filepath,z)
-        np.save(y_filepath,y)
+        np.save(y_filepath_prep,y)
+        np.save(x_filepath_prep,x)
 
-def merge_data(src:str, out:str, shuffle:bool, config:Settings):
-    
-    if config == None:
-        return    
+def merge_data(src:str, out:str, shuffle:bool):
     
     print(f"Merging data {config.path_notmerged}/{src}")
     
