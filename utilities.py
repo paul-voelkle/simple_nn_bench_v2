@@ -1,4 +1,5 @@
 import os
+from typing import TypeVar
 from tabulate import tabulate
 from print_data_utils import *
 from torch.utils.data import DataLoader
@@ -10,6 +11,8 @@ import pickle
 import math
 import csv
 import io
+
+T = TypeVar('T', bound='DataIO')
 
 ##menu navigation and printing utils
 def confirm(text:str, default:bool=False)->bool:
@@ -66,13 +69,15 @@ def min_arg_error(args: list[str], min_args:int)->bool:
 def invalid_args_error(args:list[str]):
     print(f"{args} is/are not valid argument(s)")
 
-class DataIO():
-    __noedit__ = ["__noedit__", "name", "filename", "path_default"]
-    
-    def __init__(self, filename:str, path_default:str, name:str):
+
+
+class DataIO():    
+    def __init__(self, filename:str, path_default:str, name:str, ver:str):
         self.name:str = name
         self.filename = filename
         self.path_default = path_default
+        self.__noedit__ = ["__noedit__", "name", "filename", "path_default", "ver"]
+        self.ver = ver
         
     def save(self, path:str):
         os.makedirs(path, exist_ok=True)
@@ -80,25 +85,40 @@ class DataIO():
         with open(f"{path}/{self.filename}",'wb') as file:
             pickle.dump(self,file)
 
-    def load(self, path:str):     
+    def load(self, path:str="")->T:     
+        
+        if path == "":
+            path = self.path_default
+        
         print(f"Loading {path}/{self.filename}")   
         try:
             with open(f"{path}/{self.filename}", 'rb') as file:
                 if cuda.is_available():
-                    return pickle.load(file)
+                    return self.updater(pickle.load(file))
                 else:
-                    return CPU_Unpickler(file).load()
+                    return self.updater(CPU_Unpickler(file).load())
         except IOError:
             print(f"{path}/{self.filename} not found!")
-            raise
+            return self
     
-    def load_factory(self):
-        try: 
-            self.load(self.path_default)
-        except IOError:
-            print(f"Could not load {self.path_default}, keeping factory __init__")
-            self.save(self.path_default)
+    def updater(self, file):
+        try:
+            ver = file.ver
+        except:
+            ver = "None"
+
+        if self.ver != ver:
+            print(f"Loaded file is an older version! Updating file...")
+            old_params = list(file.__dict__.keys())
             
+            for param in old_params:
+                if param != "ver" or "__noedit__":
+                    #print(f"Setting {param} = {getattr(file, param)}")
+                    setattr(self,param, getattr(file, param)) 
+            
+            return self
+        else:
+            return file
 
     def print_param(self):
         row_length = 2
@@ -145,8 +165,9 @@ class DataIO():
 
 ##program settings
 class Settings(DataIO):
+    
     def __init__(self):
-        super().__init__(filename="config.pkl", path_default=".", name="Program Settings")        
+        super().__init__(filename="config.pkl", path_default=".", name="Program Settings", ver="0.0.1")        
         #paths for models and test results
         self.path_trained = "trained_models"
         self.path_results = "test_results"
@@ -162,30 +183,28 @@ class Settings(DataIO):
         self.prep_flip:bool = True
         self.prep_rot:bool = True
         self.prep_max_data:int = 50000
-
-    def save(self):   
-        with open("config.pkl",'wb') as file:
-            print("Saving config to ./config.pkl")
-            pickle.dump(self,file)
     
-    def load(self):
-        try:
-            with open("config.pkl", 'rb') as file:
-                print("Loading config.pkl")
-                return pickle.load(file)
-        except IOError:
-            print("No config file found. Initialize factory settings")
-            self.load_factory()
-            return
+    def load(self)->'Settings':
+        return super().load(self.path_default)
+
+    # def load(self):
+    #     try:
+    #         with open("config.pkl", 'rb') as file:
+    #             print("Loading config.pkl")
+    #             return pickle.load(file)
+    #     except IOError:
+    #         print("No config file found. Initialize factory settings")
+    #         self.load_factory()
+    #         return
 
     def create_dirs(self):
         for atr in self.__dict__.keys():
             if atr.startswith("path_"):
                 os.makedirs(self.__getattribute__(atr), exist_ok=True)
     
-    def load_factory(self):
-        self.__init__()
-        self.save()
+    # def load_factory(self):
+    #     self.__init__()
+    #     self.save()
         
 ## cpu unpickler
 class CPU_Unpickler(pickle.Unpickler):
@@ -198,10 +217,10 @@ class CPU_Unpickler(pickle.Unpickler):
 ##class to track model training statistics
 class TrainStats(DataIO):
     
-    stopTime = 0.0
+    stopTime = 0.0    
     
     def __init__(self):
-        super().__init__(filename="stats.pkl", path_default=".", name="Training Stats")
+        super().__init__(filename="stats.pkl", path_default=".", name="Training Stats", ver="0.0.1")
         self.epoch:int = 0
         self.epochs:int = 0
         self.trn_loss:float = 0.0
@@ -261,8 +280,9 @@ class TrainStats(DataIO):
 
 ##class for model training hyper parameters
 class HyperParams(DataIO):
+    
     def __init__(self):
-        super().__init__(filename="hyper_parameter.pkl", path_default=".", name="Hyper Parameter")
+        super().__init__(filename="hyper_parameter.pkl", path_default=".", name="Hyper Parameter", ver="0.0.3")
         self.batch_size:int = 64
         self.epochs:int = 300
         self.loss_fn:nn.Module = nn.BCELoss()
@@ -270,10 +290,26 @@ class HyperParams(DataIO):
         self.max_val_slope:float = -1e-06
         self.val_sample_length:int = 10
         self.lr:float = 5e-5
+        self.lr_decr:bool = False
+        self.lr_interv:int = 30
+        self.lr_decr_fact:float = 0.5
         self.optimizer:torch.optim = None
         self.early_stopping:bool = True
         self.training_size:int = 0
         self.device = "cuda:0" if cuda.is_available() else "cpu"
+        self.__noedit__ = self.__noedit__ + ["optimizer"]
+
+
+class TestResults(DataIO):
+    
+    def __init__(self):
+        super().__init__(filename="results.pkl", path_default=".", name="test results", ver="0.0.1")
+        self.fpr = []
+        self.tpr = []
+        self.auc_score = []
+        self.rnd_res = 400
+        self.rnd_class = np.linspace(0,1,self.rnd_res)
+
 
 
 ##functions for training and testing the models
@@ -282,7 +318,7 @@ def init_device():
     print(f"Using {device} device")
     return device
 
-def val_pass( dataloader, model, loss_fn, test_mode:bool = "False"):
+def val_pass( dataloader, model, loss_fn, test_mode:bool = False):
     
     size = len( dataloader.dataset )
     num_batches = len( dataloader )
@@ -408,7 +444,6 @@ def merge_arrays(arrays:list[np.ndarray])->np.ndarray:
     return array
 
 
-#create and load programm configuration
-config = Settings()
-config.load()
+#create and load program configuration
+config = Settings().load()
 config.create_dirs()

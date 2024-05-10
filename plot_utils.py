@@ -13,7 +13,7 @@ from utilities import DataIO
 
 class PlotSettings(DataIO):
     def __init__(self):
-        super().__init__(filename="plot_config.pkl", path_default=".", name="Plotting Configuration")   
+        super().__init__(filename="plot_config.pkl", path_default=".", name="Plotting Configuration", ver="0.0.1")   
         self.width=6
         self.height=5
         self.font = "Times New Roman"
@@ -21,43 +21,54 @@ class PlotSettings(DataIO):
         self.font_size_text = 16
         self.font_size_label = 16
         self.font_size_title = 22
-        self.font_size_tick = 10
+        self.font_size_tick = 14
         self.scale_factor = 4
         self.figsize = (self.width*self.scale_factor, self.height*self.scale_factor)
 
+        self.hist_density:bool = True
+        self.hist_stacked:bool = True
+
         self.labelfont = FontProperties()
-        self.labelfont.set_family(self.font_familiy)
-        self.labelfont.set_name(self.font)
-        self.labelfont.set_size(self.font_size_text*self.scale_factor)
-
         self.axislabelfont = FontProperties()
-        self.axislabelfont.set_family(self.font_familiy)
-        self.axislabelfont.set_name(self.font)
-        self.axislabelfont.set_size(self.font_size_label*self.scale_factor)
-
         self.titlefont = FontProperties()
-        self.titlefont.set_family(self.font_familiy)
-        self.titlefont.set_name(self.font)
-        self.titlefont.set_size(self.font_size_title*self.scale_factor)
-
         self.tickfont = FontProperties()
-        self.tickfont.set_family(self.font_familiy)
-        self.tickfont.set_name(self.font)
-        self.tickfont.set_size(self.font_size_tick*self.scale_factor)
 
         self.axisfontsize = self.font_size_text*self.scale_factor
         self.labelfontsize = self.font_size_text*self.scale_factor
 
+        self.set_font()
+        self.set_scale()
+
+        self.__noedit__ = self.__noedit__ + ["labelfont", "axislabelfont", "titlefont", "tickfont", "axisfontsize", "labelfontsize"]
+
+    
+    def edit(self):
+        super().edit()
+        self.set_font()
+        self.set_scale()      
+
+    def set_font(self):
+
+        self.labelfont.set_family(self.font_familiy)
+        self.labelfont.set_name(self.font)
+        self.labelfont.set_size(self.font_size_text*self.scale_factor)
+
+        self.axislabelfont.set_family(self.font_familiy)
+        self.axislabelfont.set_name(self.font)
+        self.axislabelfont.set_size(self.font_size_label*self.scale_factor)
+
+        self.titlefont.set_family(self.font_familiy)
+        self.titlefont.set_name(self.font)
+        self.titlefont.set_size(self.font_size_title*self.scale_factor)
+
+        self.tickfont.set_family(self.font_familiy)
+        self.tickfont.set_name(self.font)
+        self.tickfont.set_size(self.font_size_tick*self.scale_factor)
+
         plt.rcParams["font.family"] = self.font_familiy
-        plt.rcParams["font.size"] = self.font_size_tick*self.scale_factor
         plt.rcParams["mathtext.default"] = "rm"
         plt.rcParams['text.usetex'] = True
 
-        try:
-            self.load('.')
-        except IOError:
-            self.load_factory()
-        
     def set_scale(self):
         # print(f"Setting scale to {self.scale_factor}")
         self.figsize = (self.width*self.scale_factor, self.height*self.scale_factor)
@@ -69,7 +80,8 @@ class PlotSettings(DataIO):
         self.labelfontsize = self.font_size_text*self.scale_factor
         plt.rcParams["font.size"] = self.font_size_tick*self.scale_factor
 
-plot_settings = PlotSettings()
+
+plot_settings = PlotSettings().load(PlotSettings().path_default)
 
 
 def listify(x)->list:
@@ -133,7 +145,7 @@ def create_plot(
         axs.grid('on')
     
     #create legend
-    axs.legend(loc='best', prop=plot_settings.tickfont, framealpha=0.0 )
+    axs.legend(loc='best', prop=plot_settings.labelfont, framealpha=0.0 )
     
     #save plot
     if fname != '':
@@ -202,7 +214,6 @@ def hist(
             yticks:list[float]=[],
             histtype:list[str]=['step'], 
             bins:int=0,
-            density:bool = False,
             path:str='',
             fname:str='', 
             title:str='',
@@ -235,7 +246,7 @@ def hist(
         alpha = 1.0
     
     for i in range(len(x)): 
-        axs.hist(x[i], bins=bins, alpha=alpha, histtype=histtype[i], density=density, label=labels[i])   
+        axs.hist(x[i], bins=bins, alpha=alpha, histtype=histtype[i], density=plot_settings.hist_density, stacked=plot_settings.hist_stacked, label=labels[i])   
         
     create_plot(axs, fig, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, grid)
     
