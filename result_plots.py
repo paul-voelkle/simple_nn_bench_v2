@@ -9,9 +9,9 @@ def plot_result(names:list[str]):
     auc_score = []
     linestyle = []
 
-    plot_settings.font_size_text = 8
-    plot_settings.set_scale()
-    plot_settings.set_font()
+    # plot_settings.font_size_text = 12
+    # plot_settings.set_scale()
+    # plot_settings.set_font()
     
     save_path='.'
     
@@ -40,7 +40,7 @@ def plot_result(names:list[str]):
 
     plot_2d(x=auc_curves_fpr,
             y=auc_curves_tpr, 
-            title=f'ROC Diagramme', 
+            title=f'ROC Diagramm', 
             labels=names, 
             X_label='$\epsilon_{bkg}$ - FPR', 
             Y_label='$\epsilon_{s}$ - TPR', 

@@ -13,16 +13,21 @@ from utilities import DataIO
 
 class PlotSettings(DataIO):
     def __init__(self):
-        super().__init__(filename="plot_config.pkl", path_default=".", name="Plotting Configuration", ver="0.0.1")   
-        self.width=6
-        self.height=5
-        self.font = "Times New Roman"
-        self.font_familiy = "serif"
-        self.font_size_text = 16
-        self.font_size_label = 16
-        self.font_size_title = 22
-        self.font_size_tick = 14
-        self.scale_factor = 4
+        super().__init__(filename="plot_config.pkl", path_default=".", name="Plotting Configuration", ver="0.0.5")   
+        self.width:int = 6
+        self.height:int = 5
+        self.font:str = "Times New Roman"
+        self.font_familiy:str = "serif"
+        self.font_size_text:int = 16
+        self.font_size_label:int = 16
+        self.font_size_title:int = 22
+        self.font_size_tick:int = 14
+        self.scale_factor:float = 4
+        self.linewidth:float = 0.2
+        self.linewidth_scaled:float = self.linewidth*self.scale_factor
+        
+        self.font_scale:float = 1
+
         self.figsize = (self.width*self.scale_factor, self.height*self.scale_factor)
 
         self.hist_density:bool = True
@@ -39,7 +44,7 @@ class PlotSettings(DataIO):
         self.set_font()
         self.set_scale()
 
-        self.__noedit__ = self.__noedit__ + ["labelfont", "axislabelfont", "titlefont", "tickfont", "axisfontsize", "labelfontsize"]
+        self.__noedit__ = self.__noedit__ + ["labelfont", "axislabelfont", "titlefont", "tickfont", "axisfontsize", "labelfontsize", "linewidth_scaled"]
 
     
     def edit(self):
@@ -51,19 +56,19 @@ class PlotSettings(DataIO):
 
         self.labelfont.set_family(self.font_familiy)
         self.labelfont.set_name(self.font)
-        self.labelfont.set_size(self.font_size_text*self.scale_factor)
+        self.labelfont.set_size(self.font_size_text*self.scale_factor*self.font_scale)
 
         self.axislabelfont.set_family(self.font_familiy)
         self.axislabelfont.set_name(self.font)
-        self.axislabelfont.set_size(self.font_size_label*self.scale_factor)
+        self.axislabelfont.set_size(self.font_size_label*self.scale_factor*self.font_scale)
 
         self.titlefont.set_family(self.font_familiy)
         self.titlefont.set_name(self.font)
-        self.titlefont.set_size(self.font_size_title*self.scale_factor)
+        self.titlefont.set_size(self.font_size_title*self.scale_factor*self.font_scale)
 
         self.tickfont.set_family(self.font_familiy)
         self.tickfont.set_name(self.font)
-        self.tickfont.set_size(self.font_size_tick*self.scale_factor)
+        self.tickfont.set_size(self.font_size_tick*self.scale_factor*self.font_scale)
 
         plt.rcParams["font.family"] = self.font_familiy
         plt.rcParams["mathtext.default"] = "rm"
@@ -72,13 +77,14 @@ class PlotSettings(DataIO):
     def set_scale(self):
         # print(f"Setting scale to {self.scale_factor}")
         self.figsize = (self.width*self.scale_factor, self.height*self.scale_factor)
-        self.labelfont.set_size(self.font_size_text*self.scale_factor)
-        self.axislabelfont.set_size(self.font_size_label*self.scale_factor)  
-        self.tickfont.set_size(self.font_size_tick*self.scale_factor)   
-        self.titlefont.set_size(self.font_size_title*self.scale_factor)   
-        self.axisfontsize = self.font_size_text*self.scale_factor
-        self.labelfontsize = self.font_size_text*self.scale_factor
-        plt.rcParams["font.size"] = self.font_size_tick*self.scale_factor
+        self.labelfont.set_size(self.font_size_text*self.scale_factor*self.font_scale)
+        self.axislabelfont.set_size(self.font_size_label*self.scale_factor*self.font_scale)  
+        self.tickfont.set_size(self.font_size_tick*self.scale_factor*self.font_scale)   
+        self.titlefont.set_size(self.font_size_title*self.scale_factor*self.font_scale)   
+        self.axisfontsize = self.font_size_text*self.scale_factor*self.font_scale
+        self.labelfontsize = self.font_size_text*self.scale_factor*self.font_scale
+        plt.rcParams["font.size"] = self.font_size_tick*self.scale_factor*self.font_scale
+        self.linewidth_scaled = self.linewidth*self.scale_factor
 
 
 plot_settings = PlotSettings().load(PlotSettings().path_default)
@@ -103,7 +109,6 @@ def map_ticks(ticklabels, ticks_old):
     return ticks_new
 
 
-
 def create_plot(
             axs,
             fig,
@@ -122,7 +127,7 @@ def create_plot(
     axs.set_xlabel( X_label, fontproperties=plot_settings.axislabelfont )
     axs.set_ylabel( Y_label, fontproperties=plot_settings.axislabelfont )
 
-    axs.ticklabel_format(axis="both", style="sci", scilimits=(0,0))
+    axs.ticklabel_format(axis="both", style="sci", scilimits=(-3,1))
     
     axs.set_xscale( X_scale )
     axs.set_yscale( Y_scale )
@@ -151,7 +156,7 @@ def create_plot(
     if fname != '':
         print(f"Saving plot to {path}/{fname}")
         os.makedirs(path, exist_ok=True)
-        plt.savefig(fname=f"{path}/{fname}")
+        plt.savefig(fname=f"{path}/{fname}", bbox_inches='tight')
 
 def plot_2d(
             x:list[np.ndarray], 
@@ -192,11 +197,11 @@ def plot_2d(
     
     for i in range(len(x)): 
         if len(x) == len(y):            
-            axs.plot(x[i], y[i], label=labels[i], linestyle=linestyle[i])
+            axs.plot(x[i], y[i], label=labels[i], linestyle=linestyle[i], linewidth=plot_settings.linewidth_scaled)
         elif len(y)==1:
-            axs.plot(x[i], y[0], label=labels[i], linestyle=linestyle[i])
+            axs.plot(x[i], y[0], label=labels[i], linestyle=linestyle[i], linewidth=plot_settings.linewidth_scaled)
         else:
-            axs.plot(x[i], label=labels[i]) 
+            axs.plot(x[i], label=labels[i], linewidth=plot_settings.linewidth_scaled) 
     
 
     create_plot(axs, fig, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, grid)

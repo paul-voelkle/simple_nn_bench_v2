@@ -3,7 +3,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 import numpy as np 
 import torch
 from torch.utils.data import DataLoader
-from plot_utils import plot_2d, hist, scatter
+from plot_utils import plot_2d, hist, scatter, plot_settings
 import os
 
 # PATH = "trained_models"
@@ -91,7 +91,7 @@ def test_model(model:str="", dataset:str=""):
     except:
         STATS_DATASET = False
     
-    #show hyperparamter edit promt
+    #show hyperparamter edit prompt
     # separator()
     # print("Current Hyper Parameters:")
     # separator()
@@ -109,21 +109,24 @@ def test_model(model:str="", dataset:str=""):
     #get mean, std pred
     mean_pred, std_pred = get_prediction(test_dl, model, params, n_monte=10)
     mean_pred, std_pred = mean_pred.cpu().reshape(-1).numpy(), std_pred.cpu().reshape(-1).numpy() 
-  
+    
+    font_scale = plot_settings.font_scale
+    histtype = "barstacked"
+
+
     #plot and save training and validation losses
     plot_2d(x=[stats.trn_losses, stats.val_losses], 
-            Y_scale='log', 
             linestyle=['solid','solid'],
-            labels=["training losses", 
-                    "validation losses"], 
-            X_label="epoch", 
-            Y_label="Binary CE", 
+            labels=["Trainingsverluste", 
+                    "Validierungsverluste"], 
+            X_label="Epoche", 
+            Y_label="BCELoss", 
             #xticks=ticks,
             #yticks=ticks,
             path=result_path,
-            fname='train_val_loss.png', 
-            title=f'{stats.name}: training and validation losses')
-        
+            fname='train_val_loss.png')
+    
+
     #plot and save roc and auc score
     results.fpr, results.tpr, th = roc_curve(test_dl.dataset.labels[:,0].long().cpu(), test_pred[:,0].cpu())
     results.auc_score = roc_auc_score(test_dl.dataset.labels[:,0].long().cpu(), test_pred[:,0].cpu())
@@ -131,10 +134,14 @@ def test_model(model:str="", dataset:str=""):
     results.save(results.path_default)
     store_results(params, stats, test_loss, test_corr_perc, results.auc_score, result_path)
     
+    plot_settings.font_scale = 1.4*font_scale
+    plot_settings.set_font()
+    plot_settings.set_scale()      
+
+
     #plot and save roc curve
     plot_2d(x=[results.fpr, results.rnd_class],
             y=[results.tpr, results.rnd_class], 
-            title=f'{stats.name}: ROC-Curve', 
             labels=["AUC = {:.2f}".format(results.auc_score), 'Rnd classifier'], 
             X_label='$\epsilon_{bkg}$ - FPR', 
             Y_label='$\epsilon_{s}$ - TPR', 
@@ -147,7 +154,6 @@ def test_model(model:str="", dataset:str=""):
     #plot and save roc curve with inverse FPR
     plot_2d(x=[results.tpr, results.rnd_class],
             y=[1/results.fpr, 1/results.rnd_class], 
-            title=f'{stats.name}: ROC-Curve - Inverse FPR', 
             labels=['AUC = {:.2f}\n $1/\epsilon_{{bkg}}$(0.3) = {:.0f}'.format(results.auc_score, 1/results.fpr[closest_point(results.tpr, tpr_p=0.3)]), 'Rnd classifier'], 
             X_label='$1 / \epsilon_{bkg}$ - FPR', 
             Y_label='$\epsilon_{s}$ - TPR',
@@ -158,21 +164,21 @@ def test_model(model:str="", dataset:str=""):
         
     #plot and save pred hist
     hist(x=[mean_pred],
-        title=f"{stats.name}: Histogramm of predicted values",
-        X_label="Prediction",
-        Y_label="Normailized",
+        labels=f"{stats.name}",
+        X_label="Vorhersage",
+        Y_label="$N/N_{tot}$",
         bins=50,
-        histtype="step",
+        histtype=histtype,
         path=result_path,
         fname='pred_hist.png')
     
     #plot and save std hist
     hist(x=[std_pred],
-        title=f"{stats.name}: Histogramm of standard deviation",
+        labels=f"{stats.name}",
         X_label="$\sigma_{\mathrm{pred}}$",
-        Y_label="Normailized",
+        Y_label="$N/N_{tot}$",
         bins=50,
-        histtype="step",
+        histtype=histtype,
         path=result_path,
         fname='std_hist.png')  
 
@@ -181,8 +187,12 @@ def test_model(model:str="", dataset:str=""):
             y=std_pred,
             X_label="$\mu$",
             Y_label="$\sigma_{\mathrm{pred}}$",
-            title=f"{stats.name}: Scatter Plot",
+            labels=f"{stats.name}",
             path=result_path,
             fname='scatter.png')
+    
+    plot_settings.font_scale = font_scale
+    plot_settings.set_font()
+    plot_settings.set_scale()  
 
 

@@ -9,7 +9,7 @@ class Model(nn.Module):
         self.conv2 = nn.Conv2d(hdn_ch, 1, kernel_size, bias=True, stride=1, padding=2)
         self.max = nn.MaxPool2d(kernel_size=2)
         self.flatten = nn.Flatten()
-        self.out = nn.Linear(int(img_sz*img_sz/16), out_dim, bias=True)
+        self.out = nn.Linear(100, out_dim, bias=True)
         self.name = "ConvNet2D"
         self.training_size = training_size
     

@@ -92,8 +92,8 @@ def train_loop(model, train_dl, val_dl, params:HyperParams, TrainStats:TrainStat
         #plot losses and accuracy every 5 epochs
         if t%5 == 0:
             TrainStats.stopTimer()
-            plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='last_training.png', labels=["training losses", "validation losses"], title=model.name, scale=1)
-            plot_2d(x=[TrainStats.val_accs], path='.', fname='last_training_accuracy.png', labels=["Accuracy on validation set"], title=model.name, scale=1)
+            plot_2d(x=[TrainStats.trn_losses, TrainStats.val_losses], path='.', fname='current_training_losses.png', labels=["Trainingsverluste", "Validierungsverluste"], title=model.name, scale=1)
+            plot_2d(x=[TrainStats.val_accs], path='.', fname='current_training_accuracy.png', labels=["Genauigkeit auf den val. Daten"], title=model.name, scale=1)
             TrainStats.resumeTimer()            
         
         

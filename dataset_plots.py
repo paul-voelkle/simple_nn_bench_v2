@@ -5,7 +5,7 @@ import numpy as np
 
 # Calculate the pseudorapidity of pixel entries
 def eta (x)->np.ndarray:
-    pz = x[:,:,3]
+    pz = x[:,3]
     pT = get_pT(x)
 
     small = 1e-10
@@ -28,12 +28,12 @@ def eta_cut_const(x:np.ndarray, y:np.ndarray, eta_max:float):
         return np.delete(x, np.where((etas <= -eta_max) | (etas >= eta_max)), axis=0), np.delete(y, np.where((etas <= -eta_max) | (etas >= eta_max)), axis=0) 
 
 # Calculate the azimuthal angle of pixel entries
-def phi (x):
+def phi(x):
     """
     phis are returned in rad., np.arctan(0,0)=0 -> zero constituents set to -np.pi
     """
-    px = x[:,:,1]
-    py = x[:,:,2]
+    px = x[:,1]
+    py = x[:,2]
     
     phis = np.arctan2(py,px)
     phis[phis < 0] += 2*np.pi
@@ -42,8 +42,8 @@ def phi (x):
     return phis
 
 def get_pT(x)->np.ndarray:
-    px = x[:,:,1]
-    py = x[:,:,2]
+    px = x[:,1]
+    py = x[:,2]
     return np.sqrt(px**2+py**2)
 
 def get_pT_jet(x):
@@ -74,10 +74,20 @@ def create_plots(set:str, names:list[str]):
             print(f"Set {set_path} does not exist!")
             return
         
-    
         sig = x[np.where(y[:,0] == 1)]
         bkg = x[np.where(y[:,0] == 0)]
 
+        sig_jet = sig
+        bkg_jet = bkg
+        
+        sig = np.reshape(sig, (len(sig)*200,4))
+        bkg = np.reshape(bkg, (len(bkg)*200,4))
+        
+        
+        sig = np.delete(sig, np.where(sig[:,0]+sig[:,1]+sig[:,2]+sig[:,3] == 0), axis=0)
+        bkg = np.delete(bkg, np.where(bkg[:,0]+bkg[:,1]+bkg[:,2]+bkg[:,3] == 0), axis=0)
+        
+        
         sig_z = z[np.where(y[:,0] == 1)]
         bkg_z = z[np.where(y[:,0] == 0)]
         
@@ -90,20 +100,20 @@ def create_plots(set:str, names:list[str]):
         rand_bkg =  np.random.randint(0, len(bkg_z)) 
         
         if plot_settings.hist_density and plot_settings.hist_stacked:
-            Y_label = "Anteile Partonen Noramlisiert $N/N_{tot}$"
-            Y_label_Jet = "Anteile Jets Normalisierte $N/N_{tot}$"
+            Y_label = "$N/N_{tot}$"
+            Y_label_Jet = "$N/N_{tot}$"
         else:
-            Y_label = "Anzahl Partonen $N$"
-            Y_label_Jet = "Anzahl Jets $N$"
+            Y_label = "$N$"
+            Y_label_Jet = "$N$"
 
         for i in range(0,4):
-            hist(x=[sig[:,:,i].ravel(), bkg[:,:,i].ravel()], labels=legend, Y_label=Y_label, X_label=X_label_list[i], Y_scale="log", path=plot_path, fname=f"sign_{label_list[i]}", bins=100, histtype=histtype)
+            hist(x=[sig[:,i].ravel(), bkg[:,i].ravel()], labels=legend, Y_label=Y_label, X_label=X_label_list[i], Y_scale="log", path=plot_path, fname=f"sign_{label_list[i]}", bins=100, histtype=histtype)
         
         hist(x=[get_pT(sig).ravel(), get_pT(bkg).ravel()], labels=legend, Y_label=Y_label, X_label="$p_T$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT", bins=100, histtype=histtype)
         hist(x=[eta(sig).ravel(), eta(bkg).ravel()], labels=legend, Y_label=Y_label, X_label="$\eta$", Y_scale="log", path=plot_path, fname=f"sign_eta", bins=100, histtype=histtype)
-        hist(x=[phi(sig).ravel(), phi(bkg).ravel()], labels=legend, Y_label=Y_label, X_label="$\phi$ [Rad]", Y_scale="log", path=plot_path, fname=f"sign_phi", bins=100, histtype=histtype)
-        hist(x=[get_pT_jet(sig).ravel(), get_pT_jet(bkg).ravel()], labels=legend, Y_label=Y_label_Jet, X_label="$p_{T,J}$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT_jet", bins=100, histtype=histtype)
-        hist(x=[eta_jet(sig).ravel(), eta_jet(bkg).ravel()], labels=legend, Y_label=Y_label_Jet, X_label="$\eta_J$", Y_scale="log", path=plot_path, fname=f"sign_eta_jet", bins=100, histtype=histtype)
+        hist(x=[phi(sig), phi(bkg)], labels=legend, Y_label=Y_label, X_label="$\phi$ [Rad]", Y_scale="log", path=plot_path, fname=f"sign_phi", bins=100, histtype=histtype)
+        hist(x=[get_pT_jet(sig_jet).ravel(), get_pT_jet(bkg_jet).ravel()], labels=legend, Y_label=Y_label_Jet, X_label="$p_{T,J}$ [GeV/c]", Y_scale="log", path=plot_path, fname=f"sign_pT_jet", bins=100, histtype=histtype)
+        hist(x=[eta_jet(sig_jet).ravel(), eta_jet(bkg_jet).ravel()], labels=legend, Y_label=Y_label_Jet, X_label="$\eta_J$", Y_scale="log", path=plot_path, fname=f"sign_eta_jet", bins=100, histtype=histtype)
     
 
         xpixels = np.array(["","-15","-10","-5","0","5","10","15",""])
