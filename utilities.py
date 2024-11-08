@@ -303,13 +303,44 @@ class HyperParams(DataIO):
 class TestResults(DataIO):
     
     def __init__(self):
-        super().__init__(filename="results.pkl", path_default=".", name="test results", ver="0.0.1")
+        super().__init__(filename="results.pkl", path_default=".", name="test results", ver="0.0.5")
         self.fpr = []
         self.tpr = []
-        self.auc_score = []
+        self.mean_pred = []
+        self.std_pred = []
+        self.test_loss = 0.0
+        self.test_corr = 0.0
+        self.auc_score = 0.0
+        self.bck_rej = 0.0
         self.rnd_res = 400
         self.rnd_class = np.linspace(0,1,self.rnd_res)
+        self.tag_times:list[float] = []
+        self.tag_time_mean = 0.0
+        self.tag_time_std = 0.0
+        self.elapsed_time = 0.0
+        self.start_time = 0.0
+        self.stop_time = 0.0
 
+    def appendTime(self):
+        self.tag_times.append(time.time() - self.start_time)
+
+    def evalTime(self):
+        print("Tagging Times:")
+        self.tag_time_mean = np.mean(self.tag_times)
+        self.tag_time_std = np.std(self.tag_times)
+        print(f"{self.tag_time_mean} +- {self.tag_time_std} s")
+    
+    def startTimer(self):
+        self.start_time = time.time()
+    
+    def getTimer(self):
+        self.elapsed_time = round(time.time() - self.start_time,3)
+        
+    def stopTimer(self):
+        self.stopTime = time.time()
+        
+    def resumeTimer(self):
+        self.start_time += time.time() - self.stopTime
 
 
 ##functions for training and testing the models
@@ -386,7 +417,7 @@ def load_model(name:str, params:HyperParams, filepath:str):
     print(model)
     return model
 
-def store_results(params:HyperParams, train_stats:TrainStats, test_loss, perc_corr, auc_score, path):
+def store_results(params:HyperParams, train_stats:TrainStats, results:TestResults, path):
     print(f"Writing result to {path}/results.csv")
     with open(f"{path}/results.csv", 'w', newline='') as file:
         writer = csv.writer(file)
@@ -397,8 +428,8 @@ def store_results(params:HyperParams, train_stats:TrainStats, test_loss, perc_co
         writer.writerow(['Model Name', 'Elapsed Time', 'Total Epochs', 'Training Dataset', 'Validation Dataset'])
         writer.writerow([train_stats.name, train_stats.elapsed_time, train_stats.epoch, train_stats.dataset[0], train_stats.dataset[1]])
         writer.writerow(['Testing Statistics'])
-        writer.writerow(['Testing Dataset', 'Mean Test Loss', 'Correct Percentage', 'AUC Score'])
-        writer.writerow([train_stats.dataset[2], test_loss, perc_corr, auc_score])
+        writer.writerow(['Testing Dataset', 'Mean Test Loss', 'Correct Percentage', 'AUC Score', 'Background Rejection', 'Mean Tagging Time', 'Std Tagging Time'])
+        writer.writerow([train_stats.dataset[2], results.test_loss, results.test_corr, results.auc_score, results.bck_rej , results.tag_time_mean, results.tag_time_std])
 
 
 ##further utilities

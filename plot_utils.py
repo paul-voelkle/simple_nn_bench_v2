@@ -13,11 +13,12 @@ from utilities import DataIO
 
 class PlotSettings(DataIO):
     def __init__(self):
-        super().__init__(filename="plot_config.pkl", path_default=".", name="Plotting Configuration", ver="0.0.5")   
+        super().__init__(filename="plot_config.pkl", path_default=".", name="Plotting Configuration", ver="0.0.7")   
         self.width:int = 6
         self.height:int = 5
         self.font:str = "Times New Roman"
         self.font_familiy:str = "serif"
+        self.bbox_inches:str = "tight"
         self.font_size_text:int = 16
         self.font_size_label:int = 16
         self.font_size_title:int = 22
@@ -25,6 +26,7 @@ class PlotSettings(DataIO):
         self.scale_factor:float = 4
         self.linewidth:float = 0.2
         self.linewidth_scaled:float = self.linewidth*self.scale_factor
+        self.cmap:str = 'gist_heat_r'
         
         self.font_scale:float = 1
 
@@ -88,7 +90,8 @@ class PlotSettings(DataIO):
 
 
 plot_settings = PlotSettings().load(PlotSettings().path_default)
-
+plot_settings.set_font()
+plot_settings.set_scale()   
 
 def listify(x)->list:
     if not isinstance(x, list):
@@ -121,7 +124,9 @@ def create_plot(
             path='',
             fname='',
             title:str="",
-            grid:bool=True
+            grid:bool=True,
+            vline:list[float]=[],
+            vline_style:list[str]=[]            
 ):
     #set axis labels, scale and tick format
     axs.set_xlabel( X_label, fontproperties=plot_settings.axislabelfont )
@@ -223,7 +228,9 @@ def hist(
             fname:str='', 
             title:str='',
             grid:bool=True,
-            scale:float=4):
+            scale:float=4,
+            vline:list[float]=[],
+            vline_style:list[str]=[]):
 
     plot_settings.scale_factor = scale
     plot_settings.set_scale()
@@ -238,6 +245,12 @@ def hist(
     
     if not isinstance(histtype, list):
         histtype = [histtype]    
+
+    if not isinstance(vline, list):
+        vline = [vline]    
+        
+    if not isinstance(vline_style, list):
+        vline_style = [vline_style]    
     
     if len(histtype) != len(x):
         histtype_old = histtype
@@ -252,7 +265,11 @@ def hist(
     
     for i in range(len(x)): 
         axs.hist(x[i], bins=bins, alpha=alpha, histtype=histtype[i], density=plot_settings.hist_density, stacked=plot_settings.hist_stacked, label=labels[i])   
-        
+    
+    if len(vline) != 0 and len(vline) == len(vline_style):
+        for i in range(len(vline)):
+            axs.axvline(vline[i], color='k', linestyle=vline_style[i], linewidth=plot_settings.linewidth_scaled)    
+            
     create_plot(axs, fig, X_label, Y_label, X_scale, Y_scale, xticks, yticks, path, fname, title, grid)
     
     return fig
@@ -324,12 +341,15 @@ def heatmap(
             path:str='',
             fname:str='',
             title:str="",
-            cmap:list[str]=['gist_heat_r'],
+            cmap:list[str]=[],
             grid:bool=True,
             scale:float = 4):
 
     plot_settings.scale_factor = scale
     plot_settings.set_scale()
+    
+    if len(cmap) == 0:
+        cmap = plot_settings.cmap
     
     fig, axs = plt.figure(figsize=plot_settings.figsize), plt.axes()
     

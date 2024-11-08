@@ -100,11 +100,11 @@ def create_plots(set:str, names:list[str]):
         rand_bkg =  np.random.randint(0, len(bkg_z)) 
         
         if plot_settings.hist_density and plot_settings.hist_stacked:
-            Y_label = "$N/N_{tot}$"
-            Y_label_Jet = "$N/N_{tot}$"
+            Y_label = "$\log(N/N_{tot})$"
+            Y_label_Jet = "$\log(N/N_{tot})$"
         else:
-            Y_label = "$N$"
-            Y_label_Jet = "$N$"
+            Y_label = "$\log(N)$"
+            Y_label_Jet = "$\log(N)$"
 
         for i in range(0,4):
             hist(x=[sig[:,i].ravel(), bkg[:,i].ravel()], labels=legend, Y_label=Y_label, X_label=X_label_list[i], Y_scale="log", path=plot_path, fname=f"sign_{label_list[i]}", bins=100, histtype=histtype)
@@ -119,8 +119,8 @@ def create_plots(set:str, names:list[str]):
         xpixels = np.array(["","-15","-10","-5","0","5","10","15",""])
         ypixels = xpixels #np.array(["","-30","-20","-10","0","10","20","30",""])
 
-        heatmap(sig_z.mean(0).reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$ [pixel]", Y_label="$\Delta \phi$ [pixel]", title=f"Gemitteltes Signal mit {len(sig_z)} Jets", path=plot_path, fname="signal_mean")
-        heatmap(bkg_z.mean(0).reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$ [pixel]", Y_label="$\Delta \phi$ [pixel]", title=f"Gemittelter Hintergrund mit {len(bkg_z)} Jets", path=plot_path, fname="background_mean")
+        heatmap(sig_z.mean(0).reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$ [pixel]", Y_label="$\Delta \phi$ [pixel]", path=plot_path, fname="signal_mean")
+        heatmap(bkg_z.mean(0).reshape((40,40)), xticks=xpixels, yticks=ypixels, X_label="$\Delta \eta$ [pixel]", Y_label="$\Delta \phi$ [pixel]", path=plot_path, fname="background_mean")
         
         rand_sig = np.random.randint(0, len(sig_z)) 
         rand_bkg =  np.random.randint(0, len(bkg_z))        
